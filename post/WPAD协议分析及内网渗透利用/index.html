@@ -1,0 +1,630 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/global/favicon.ico">
+  <link rel="icon" href="/img/global/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="eW1z4rd">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本文将会阐述 WPAD 协议的工作原理、实现方式以及在内网渗透中的应用思路。 0x00 前言WPAD 这项技术已经诞生了近十年的时间，其最大的优势就在于在一个或多个局域网中，当需要为内网中的用户设置不同的代理服务器去连接互联网或者企业内网时，利用  WPAD 就能够灵活方便的进行配置。由于配置代理服务器的方式对于用户来说是透明的，因此，攻击者就容易利用 WPAD 进行内网的渗透。 可能是由于常规的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WPAD 协议分析及内网渗透利用">
+<meta property="og:url" content="https://ew1z4rd.github.io/post/WPAD%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90%E5%8F%8A%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%88%A9%E7%94%A8/index.html">
+<meta property="og:site_name" content="栖丘">
+<meta property="og:description" content="本文将会阐述 WPAD 协议的工作原理、实现方式以及在内网渗透中的应用思路。 0x00 前言WPAD 这项技术已经诞生了近十年的时间，其最大的优势就在于在一个或多个局域网中，当需要为内网中的用户设置不同的代理服务器去连接互联网或者企业内网时，利用  WPAD 就能够灵活方便的进行配置。由于配置代理服务器的方式对于用户来说是透明的，因此，攻击者就容易利用 WPAD 进行内网的渗透。 可能是由于常规的">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-08-08T13:15:31.000Z">
+<meta property="article:modified_time" content="2022-01-30T03:10:31.566Z">
+<meta property="article:author" content="eW1z4rd">
+<meta property="article:tag" content="exploit">
+<meta property="article:tag" content="concept">
+<meta property="article:tag" content="内网渗透">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  <title>WPAD 协议分析及内网渗透利用 - 栖丘</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"ew1z4rd.github.io","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"f307ed711fcf86fe5ceb149239b6cfc3","google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>eW1z4rd&#39;s space</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/global/post-bg.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="WPAD 协议分析及内网渗透利用">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2019-08-08 21:15" pubdate>
+        2019年8月8日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      7.3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      62 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">WPAD 协议分析及内网渗透利用</h1>
+            
+            <div class="markdown-body">
+              <p>本文将会阐述 WPAD 协议的工作原理、实现方式以及在内网渗透中的应用思路。</p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>WPAD 这项技术已经诞生了近十年的时间，其最大的优势就在于在一个或多个局域网中，当需要为内网中的用户设置不同的代理服务器去连接互联网或者企业内网时，利用  WPAD 就能够灵活方便的进行配置。由于配置代理服务器的方式对于用户来说是透明的，因此，攻击者就容易利用 WPAD 进行内网的渗透。</p>
+<p>可能是由于常规的内网渗透，如 Windows 域的渗透中，攻击者只需拿到域控的权限即可控制域中的任何机器，所以攻击者往往只关注如何抓到域管理员的 Hash，而即使在工作组的渗透中，也有着比 WPAD 更有效的攻击方式。因此，虽然利用 WPAD 进行内网渗透的技术已经出现了很多年了，但一直没有变得像 ARP Spoof 等攻击方式那么流行。但是在攻击者“无计可施”的时候，也会采用一些“非主流”的方式进行内网渗透，WPAD 可能造成的安全隐患，不容我们忽视。</p>
+<span id="more"></span>
+
+<h3 id="0x01-WPAD-简介"><a href="#0x01-WPAD-简介" class="headerlink" title="0x01 WPAD 简介"></a>0x01 WPAD 简介</h3><p><strong>WPAD（Web Proxy Auto-Discovery Protocol，网络代理自动发现协议）</strong>，可以使局域网中用户的浏览器自动发现内网中的代理服务器，并使用已发现的代理服务器连接互联网或者企业内网。WPAD 支持所有主流的浏览器，从 IE 5.0 开始就已经支持了代理服务器自动发现/切换的功能，而苹果公司考虑到 WPAD 的安全风险，在包括 OSX 10.10 及之后版本的操作系统中的 Safari 浏览器将不再支持 PAC 文件的解析。</p>
+<blockquote>
+<p>注：默认情况下，在所有 Windows 操作系统和 IE 浏览器上都启用了 WPAD，而 Mac OS X 和 Linux 操作系统，以及 Safari、Chrome 和 Firefox 等浏览器，虽然支持 WPAD，但默认情况下不会启用。</p>
+</blockquote>
+<h4 id="WPAD-工作原理"><a href="#WPAD-工作原理" class="headerlink" title="WPAD 工作原理"></a>WPAD 工作原理</h4><p>当系统开启了代理自动发现功能后，用户使用浏览器上网时，浏览器就会在当前局域网中自动查找可以加载 PAC 文件的服务器，之后下载 PAC 配置文件（通过 80 端口），并执行特定的 JavaScript 脚本将相应的代理服务器设置到用户的浏览器中。</p>
+<p><strong>WPAD 查询步骤如下：</strong></p>
+<ul>
+<li>如果 DHCP 服务器配置了 wpad，那么直接从 DHCP 服务器获取 wpad.dat 文件，如果成功则下载 wpad.dat 文件并配置，否则执行下一步；</li>
+<li>向 DNS 服务器发送请求查找 wpad.test.local，然后获取代理配置文件，如果成功下载 wpad.dat 文件并配置，否则执行下一步；</li>
+<li>发送 LLMNR 查询 wpad.test.local，如果成功则下载 wpad.dat 文件并配置，否则代理设置失败。</li>
+</ul>
+<h4 id="PAC-文件"><a href="#PAC-文件" class="headerlink" title="PAC 文件"></a>PAC 文件</h4><p><strong>PAC（Proxy Auto-Config，代理自动配置文件）</strong>，定义了浏览器和其他用户代理在访问一个 URL 时所应该使用的代理服务器（完成自动选择），使用 <strong>Javascript</strong> 进行 URL 和代理服务器的描述。通常使用 <strong>proxy.pac</strong> 作为文件名，WPAD 标准则要求使用 <strong>wpad.dat</strong> 作为 PAC 文件的文件名。</p>
+<blockquote>
+<p>要使用 PAC，则应当在网页服务器上发布一个 PAC 文件，并且通过浏览器的代理链接设置页面输入这个 PAC 文件的 URL 或者使用 WPAD 协议告知用户代理去使用这个文件。</p>
+</blockquote>
+<p>一个 PAC 文件至少定义了一个名为 <strong>FindProxyForURL(url, host)</strong> 的 JavaScript 函数，该函数的返回值是一个字符串，指定了 URL 的访问方式，两个参数分别代表了要指定设置的 URL 和 该 URL 所对应的主机名。</p>
+<p>PAC 文件内容示例如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></div></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">FindProxyForURL</span>(<span class="hljs-params">url, host</span>) </span>&#123;<br>   <span class="hljs-keyword">if</span> (url== <span class="hljs-string">&#x27;http://example.org/&#x27;</span>) <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;DIRECT&#x27;</span>;<br>   <span class="hljs-keyword">if</span> (shExpMatch(host, <span class="hljs-string">&quot;*.wooyun.org&quot;</span>)) <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;DIRECT&quot;</span>;<br>   <span class="hljs-keyword">if</span> (host== <span class="hljs-string">&#x27;wooyun.com&#x27;</span>) <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;SOCKS 127.1.1.1:8080&#x27;</span>;<br>   <span class="hljs-keyword">if</span> (dnsResolve(host) == <span class="hljs-string">&#x27;10.0.0.100&#x27;</span>) <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;PROXY 127.2.2.2:8080;DIRECT&#x27;</span>;<br>   <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;DIRECT&#x27;</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>该文件定义了当用户访问 <a target="_blank" rel="noopener" href="http://example.org/">http://example.org</a> 时，将不使用任何代理服务器直接（DIRECT）访问 URL。也可以使用 <strong>shExpMatch</strong> 函数对 host 或者 url 进行匹配设置，<strong>SOCKS 127.1.1.1:8080</strong> 指定了使用 127.1.1.1:8080 的 SOCKS 代理进行 URL 的访问，<strong>PROXY 127.2.2.2:8080;DIRECT</strong> 指定了使用 127.2.2.2:8080 的 HTTP 代理进行 URL 的访问，如果连接 127.2.2.2:8080 的 HTTP 代理服务器失败，则直接（DIRECT）访问 URL。</p>
+<blockquote>
+<p>注：FF 和 IE 只支持系统默认的编码类型的 PAC 文件，并且不支持 Unicode 编码，如 UTF-8。</p>
+</blockquote>
+<h3 id="0x02-Windows-中的-WPAD"><a href="#0x02-Windows-中的-WPAD" class="headerlink" title="0x02 Windows 中的 WPAD"></a>0x02 Windows 中的 WPAD</h3><h4 id="IE-浏览器中默认开启-WPAD"><a href="#IE-浏览器中默认开启-WPAD" class="headerlink" title="IE 浏览器中默认开启 WPAD"></a>IE 浏览器中默认开启 WPAD</h4><p>在 Windows 系统中，从 IE 5.0 开始就支持了 WPAD，并且是默认开启 WPAD 功能的，如下图所示：</p>
+<p>![img](/img/WPAD 协议分析及内网渗透利用/20171207135000-76d44886-db12-1.png)</p>
+<p>图1：Windows 中 IE 浏览器的 WPAD 设置</p>
+<p>另外，Windows 系统从 IE 5.5 开始支持“自动代理结果缓存”功能，并默认设置为开启。因为每次客户端浏览器成功连接 HTTP 代理服务器时都会更新 ARP 缓存，开启此功能后，当客户端浏览器再次连接代理服务器，即再次调用 FindProxyForURL() 函数时，会先检查 ARP 缓存列表中是否存在要连接的 HTTP 代理服务器地址，再选择是否需要代理，以缩减系统获取分配对象的开销。</p>
+<h4 id="WinHTTP-的-WPAD-支持"><a href="#WinHTTP-的-WPAD-支持" class="headerlink" title="WinHTTP 的 WPAD 支持"></a>WinHTTP 的 WPAD 支持</h4><p>在 Windows 系统中，有一个服务名为 <strong>WinHTTP Web Proxy Auto-Discovery Service</strong>，其描述信息为  “WinHTTP 实现了客户端 HTTP 堆栈并向开发人员提供 Win32 API 和 COM 自动化组件以供发送 HTTP 请求和接收响应。此外，通过执行 Web 代理自动发现（WPAD）协议，WinHTTP 还提供对自动发现代理服务器配置的支持。”，如图所示：</p>
+<p>![1562741625870](/img/WPAD 协议分析及内网渗透利用/1562741625870.png)</p>
+<p>图2：Windows 中的 WinHttpAutoProxySvc 服务</p>
+<p><strong>出于安全性考虑，建议禁用。</strong></p>
+<blockquote>
+<p>注：WPAD 并不是 IE 浏览器的功能，而是属于WinHTTP 库中的功能，有一个单独的 WinHttpAutoProxySvc 服务。WinHTTP 是Windows系统下提供 autoproxy 服务的独立的网络库，专门为提供 HTTP/HTTPS 服务的。<br>网上很多文章说，防止 WPAD 攻击就是禁用浏览器的 WPAD，这个方法只能说治标不治本。单单禁用浏览器的 WPAD 功能只能保证浏览器的访问数据没法通过 WPAD 劫持了，但是这种禁用方式不会影响 WinHTTP 的功能。在 WIN 系统下，处理 HTTP 的请求基本都用 WinHTTP 的库，如果其他程序使用 WinHTTP，WPAD 照样还是可以攻击。</p>
+</blockquote>
+<h3 id="0x03-WPAD-实现方式"><a href="#0x03-WPAD-实现方式" class="headerlink" title="0x03 WPAD 实现方式"></a>0x03 WPAD 实现方式</h3><p>WPAD 通过让浏览器自动发现代理服务器，使代理服务器对用户来说是透明的，进而轻松访问互联网。WPAD 可以借助 DHCP 服务器、DNS 服务器和 WINS 服务器，来查询代理自动配置（PAC）文件的位置，如图所示：</p>
+<p>![1562809252340](/img/WPAD 协议分析及内网渗透利用/1562809252340.png)</p>
+<p>图3：WPAD 查询 PAC 文件的方式</p>
+<h4 id="使用-DHCP-配置-WPAD"><a href="#使用-DHCP-配置-WPAD" class="headerlink" title="使用 DHCP 配置 WPAD"></a>使用 DHCP 配置 WPAD</h4><p><strong>DHCP（Dynamic Host Configuration Protocol，动态主机配置协议）</strong>，是一个用于局域网的网络管理协议，可以为进入网络的任何新节点进行动态分配，主要功能是分配 IP 地址，此外还包含一些其他信息，如子网掩码、 WPAD 等，这些额外的信息都是通过 DHCP 协议中的 <strong>Options</strong> 字段传输的。</p>
+<p>DHCP 的工作流程有 4 个步骤：</p>
+<p>![img](/img/WPAD 协议分析及内网渗透利用/20171207135039-8e14982a-db12-1.png)</p>
+<p>图4：DHCP 工作流程</p>
+<p>上图即为客户端与 DHCP 服务器进行交互的过程。其中前两个流程主要是客户端发送广播包，DHCP  服务器进行响应并客户端进行单播通讯，后面的两个流程即为客户端从 DHCP 服务器获取 IP 地址的过程。</p>
+<p>当使用 DHCP 服务器配置 WPAD 时，DHCP 协议将会有所改变，增加了 <strong>DHCPINFORM</strong> 消息（具体的改变可以在 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2131">RFC 2131</a> 中看到），用于客户端请求本地配置参数。所以客户端在请求 WPAD 主机时就会发送 DHCPINFORM 请求消息，查询 PAC 文件位置；之后 DHCP 服务器会应答 DHCPINFORM 请求，返回 DHCPACK 确认消息，此消息中的 DHCP Options 字段里包含的 DHCP <strong>252</strong> 选项即为 WPAD 代理服务器的 PAC 文件地址。</p>
+<blockquote>
+<p>注：在目前的大多数内网中已经不再使用 DHCP 服务器进行客户端 WPAD 的配置了，而是采用较为简单的 DNS 服务器进行配置，关于 DHCP Options  的其他定义可以查看 DHCP 的 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc1531">RFC 1531</a>。</p>
+</blockquote>
+<h4 id="利用-DNS-配置-WPAD"><a href="#利用-DNS-配置-WPAD" class="headerlink" title="利用 DNS 配置 WPAD"></a>利用 DNS 配置 WPAD</h4><p>利用 DNS 配置 WPAD 的方式本质上还是利用了 Windows 系统的名称解析机制，其过程如下：</p>
+<ul>
+<li><p>如果客户端主机是处于域环境下时，客户端主机向 DNS 服务器发起的 WPAD+X 的查询请求为 <strong>“WPAD.当前域的域名”</strong>，DNS 服务器对 WPAD 主机的名称进行解析返回 WPAD 主机的 IP 地址，客户端 Web 浏览器通过 WPAD 主机的 IP 的 80 端口下载并解析 PAC 文件；</p>
+</li>
+<li><p>如果客户端主机是在工作组环境中，客户端主机向 DNS 服务器发起的 WPAD+X 的查询时，则会遵循 Windows 系统的名称解析顺序，查询请求的名称均为 <strong>“WPAD”</strong>，OS 版本为 Vista 之后的（包括 Vista）顺序为：DNS =&gt; LLMNR =&gt; NBNS，反之则为 DNS =&gt; NBNS。</p>
+</li>
+</ul>
+<h4 id="通过-NBNS-配置-WPAD"><a href="#通过-NBNS-配置-WPAD" class="headerlink" title="通过 NBNS 配置 WPAD"></a>通过 NBNS 配置 WPAD</h4><p>如果 <strong>DHCP 服务器和 DNS 服务器均没有响应</strong>，同时当前缓存没有所请求的主机名，就会发起如下名称解析：</p>
+<ul>
+<li><p>如果当前系统支持 LLMNR，先发起 LLMNR 广播查询；</p>
+</li>
+<li><p>如果没有响应，再发起 NBNS 广播查询；</p>
+</li>
+<li><p>如果有主机回应 PAC 文件位置，Web 浏览器通过该 IP 的 80 端口下载 wpad.dat文件。</p>
+</li>
+</ul>
+<blockquote>
+<p>注：Windows 2K，XP，2K3 只支持 DNS 和 NetBIOS<br>Windows Vista 之后（包括 2K8，Win7，Win8.x，Win 10）支持DNS、NetBIOS、LLMNR</p>
+</blockquote>
+<h3 id="0x04-使用-MSF-进行-WPAD-内网渗透"><a href="#0x04-使用-MSF-进行-WPAD-内网渗透" class="headerlink" title="0x04 使用 MSF 进行 WPAD 内网渗透"></a>0x04 使用 MSF 进行 WPAD 内网渗透</h3><p>对照 WPAD 的原理，不难发现其中存在漏洞，可以利用 Windows 系统名称解析机制的缺陷，进行 WPAD 的“恶意”配置，从而进行内网的渗透。一种常见的利用方式是在被攻击用户发起 NBNS 查询时伪造 NBNS 响应，那么就可以控制其通过伪造的代理服务器上网，达到会话劫持的目的，如下图所示：</p>
+<p>![1562810465897](/img/WPAD 协议分析及内网渗透利用/2019-08-06_161644.png)</p>
+<p>图5：利用 WPAD 进行内网渗透</p>
+<p><strong>使用 MSF 对以上过程进行测试，进行 WPAD 内网渗透：</strong></p>
+<ul>
+<li><p><strong>测试环境：</strong></p>
+<ul>
+<li><p>被攻击用户：</p>
+<p>Windows 7、192.168.16.191</p>
+</li>
+<li><p>攻击用户：</p>
+<p>Kali Linux、192.168.16.245</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>1. 监听 NBNS 查询请求</strong></p>
+<blockquote>
+<p>use auxiliary/spoof/nbns/nbns_response<br>set regex WPAD<br>set spoofip 192.168.16.245<br>run</p>
+</blockquote>
+<p>![img](/img/WPAD 协议分析及内网渗透利用/2019-08-06_155506.png)</p>
+<p>图6：监听 NBNS 查询请求</p>
+<p><strong>2. 伪造 WPAD 服务器</strong></p>
+<blockquote>
+<p>use auxiliary/server/wpad<br>set proxy 192.168.16.245<br>run</p>
+</blockquote>
+<p>![img](/img/WPAD 协议分析及内网渗透利用/2019-08-06_155507.png)</p>
+<p>图7：伪造 WPAD 服务器</p>
+<p><strong>3. 伪造被攻击用户发起查询</strong></p>
+<p>构造广播 NBNS 查询，前提是需要使当前 DHCP 和 DNS 服务器均无法提供的 PAC 文件位置。</p>
+<blockquote>
+<p>注：关闭上述服务器后浏览器访问任意网页即可。</p>
+</blockquote>
+<p><strong>4. 响应被攻击用户的广播 NBNS 查询</strong></p>
+<p>攻击主机响应广播 NBNS 查询并指定 PAC 文件位置，被攻击主机访问指定的 PAC 位置请求下载。![2019-08-06_155508](/img/WPAD 协议分析及内网渗透利用/2019-08-06_155508.png)</p>
+<p>图8：攻击者发起恶意响应</p>
+<p><strong>5. 使用 Burp 配置代理服务器</strong></p>
+<p>配置 Burp 代理 IP 为 192.168.253.131:8080，使受害者通过攻击者的代理服务器访问互联网。</p>
+<p>![2019-08-06_155552](/img/WPAD 协议分析及内网渗透利用/2019-08-06_155552.png)</p>
+<p>图9：配置 Burp 代理服务器</p>
+<p><strong>6. 被攻击用户使用伪造的代理配置上网</strong></p>
+<p>![2019-08-06_155627](/img/WPAD 协议分析及内网渗透利用/2019-08-06_155627.png)</p>
+<p>图10：受害者通过代理访问网页</p>
+<p>![2019-08-06_155646](/img/WPAD 协议分析及内网渗透利用/2019-08-06_155646.png)</p>
+<p>图11：查看受害者主机 NetBIOS缓存</p>
+<h3 id="0x05-WPAD-内网渗透深入研究"><a href="#0x05-WPAD-内网渗透深入研究" class="headerlink" title="0x05 WPAD 内网渗透深入研究"></a>0x05 WPAD 内网渗透深入研究</h3><ul>
+<li><p>利用 NetBIOS 名称解析进行基于 WPAD 的中间人攻击</p>
+<p>见 <a href="https://ew1z4rd.github.io/2019/08/05/%E5%88%A9%E7%94%A8-NBNS-%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8C-WPAD-%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/">利用 NBNS 协议缺陷进行 WPAD 中间人攻击</a></p>
+</li>
+<li><p>利用 LLLMNR 名称解析缺陷进行基于 WPAD 的中间人攻击</p>
+<p>见 <a href="https://ew1z4rd.github.io/2019/08/02/%E5%88%A9%E7%94%A8-LLMNR-%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/">利用 LLMNR 名称解析缺陷劫持内网指定主机会话</a></p>
+</li>
+<li><p>利用 DHCP 本地网络进行基于 WPAD 的中间人攻击</p>
+<p>在本地网络中，攻击者可以通过 ARP 欺骗等方式伪装成 DHCP 服务器，然后在 DHCP 响应包的 DHCP 252 选项中提供一个恶意 PAC 文件所在的 URL。</p>
+</li>
+<li><p>通过特权地位（privileged position）和 DNS 进行远程攻击</p>
+<p>除了本地网络攻击外，WPAD 攻击也可能通过外部 DNS 查询发生。由于许多用户将他们的计算机配置了公共的 DNS 服务器（如 8.8.8.8、8.8.4.4、208.67.222.222 和 208.67.220.220）来执行 DNS 域名解析，在这种情况下，用户机器会发送 DNS 查询（如 wpad.local）到本地网络之外的服务器，处于网络特权位置的攻击者（例如网关或任何其他上游主机）可以监视 DNS 查询并伪造应答，从而指示客户端下载并执行恶意的 PAC 文件。</p>
+</li>
+<li><p>通过恶意的 wpad.tld 远程访问 Internet</p>
+<p>WPAD 的特殊之处在于会递归地遍历本地机器名称以查找要查询的域，如果一台机器被称为“laptop01.us.division.company.com”，则按照以下方式查询以下域名：</p>
+<blockquote>
+<ol>
+<li>wpad.us.division.company.com</li>
+<li>wpad.division.company.com</li>
+<li>wpad.company.com</li>
+<li>wpad.com</li>
+</ol>
+</blockquote>
+<p>利用这个漏洞，攻击者可以通过恶意的 wpad.tld 域名，将用户的浏览器指向自己的代理，拦截并修改所有的 HTTP 流量。</p>
+</li>
+</ul>
+<h3 id="0x06-威胁实例-——-Flame-病毒"><a href="#0x06-威胁实例-——-Flame-病毒" class="headerlink" title="0x06 威胁实例 —— Flame 病毒"></a>0x06 威胁实例 —— Flame 病毒</h3><p><strong>超级火焰（Flame）病毒利用 WPAD 进行中间人攻击</strong>，其工作模式如下：</p>
+<ul>
+<li><p><strong>SNACK：NetBIOS 名称服务器欺骗（NBNS spoofing）</strong></p>
+<p>SNACK 模块会为所有网络接口或预设网络接口创建一个 RAW 网络套接字，并监听当前网络接收所有的网络数据包，如果收到了 NBNS 查询会将其写入加密的日志文件中（“%windir%\temp~DEB93D.tmp”），当 NBNS 查询请求中包含<strong>“WPAD”</strong>或<strong>“MSHOME-F3BE293C”</strong> 字符，立即伪造 NBNS 响应，返回自己的 IP 地址。</p>
+</li>
+<li><p><strong>MUNCH：代理检测欺骗和 Windows 更新请求欺骗（Spoofing proxy detection and Windows Update request）</strong></p>
+<p>“MUNCH”是 FlameHTTP 服务器模块的名称，用于提供 WPAD 服务，它会收到来自受感染计算机中的 SNACK 提供的 IP 地址，并通过由 MUNCH 提供的 “wpad.dat” 文件将受感染计算机用作代理服务器。当其成功作为被攻击主机的代理后，会劫持特定的 Windows 更新请求到 MUNCH 服务器，并提供带有后门的 Windows 更新文件给受害者下载。</p>
+</li>
+</ul>
+<h3 id="0x07-总结"><a href="#0x07-总结" class="headerlink" title="0x07 总结"></a>0x07 总结</h3><p>在利用 WPAD 进行攻击时，实际的效果很可能没有想象的那么好，不过一旦奏效，就可以拿到受害者主机权限。在很多内网中，管理员不会对这些攻击方式做防御措施，除了部分桌面安全产品，如防火墙可能会做严格的过滤拦截，大部分情况下，此类攻击方式还是很有效的。尤其是可以在做名称解析响应时，可以筛选受害者主机，对  HTTP 数据包进行更改插入恶意代码，进行针对性的定点打击。</p>
+<h4 id="预防和修复"><a href="#预防和修复" class="headerlink" title="预防和修复"></a>预防和修复</h4><p>对于 WPAD 攻击，<strong>唯一</strong>能够阻止这类漏洞的方法就是完全禁用 WinHttpAutoProxySvc 服务。有时由于其他服务依赖 WPAD，所以在“服务”设置中无法禁用它（选项变灰），但可以通过修改相应的注册表项来完成：</p>
+<blockquote>
+<p>在注册表“HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinHttpAutoProxySvc”位置下，将“Start”的值从3（手动）更改为4（禁用）。</p>
+</blockquote>
+<p><strong>参考文章：</strong><br><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/1739">https://xz.aliyun.com/t/1739</a><br><a target="_blank" rel="noopener" href="https://www.cnblogs.com/studyskill/p/8532566.html">https://www.cnblogs.com/studyskill/p/8532566.html</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/zy_strive_2012/article/details/53196482">https://blog.csdn.net/zy_strive_2012/article/details/53196482</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/exploit/">exploit</a>
+                    
+                      <a class="hover-with-bg" href="/tags/concept/">concept</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/post/Windows%E5%AE%89%E5%85%A8%E8%AE%A4%E8%AF%81%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Windows 安全认证机制探究</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/post/%E5%88%A9%E7%94%A8NBNS%E5%8D%8F%E8%AE%AE%E7%BC%BA%E9%99%B7%E8%BF%9B%E8%A1%8CWPAD%E4%B8%AD%E9%97%B4%E4%BA%BA%E6%94%BB%E5%87%BB/">
+                        <span class="hidden-mobile">利用 NBNS 协议缺陷进行 WPAD 中间人攻击</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <span>Powered by</span> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <span>×</span> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            Pageviews: 
+            <span id="busuanzi_value_site_pv"></span>
+             times
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            Total Visitors: 
+            <span id="busuanzi_value_site_uv"></span>
+             persons
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

