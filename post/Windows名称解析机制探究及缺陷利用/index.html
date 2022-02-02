@@ -32,13 +32,13 @@
 <meta property="og:image" content="https://ew1z4rd.github.io/img/Windows%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6%E5%8F%8A%E7%BC%BA%E9%99%B7%E5%88%A9%E7%94%A8/2019-08-06_100249.png">
 <meta property="og:image" content="https://ew1z4rd.github.io/img/Windows%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6%E5%8F%8A%E7%BC%BA%E9%99%B7%E5%88%A9%E7%94%A8/2019-08-06_100350.png">
 <meta property="article:published_time" content="2019-07-16T11:32:12.000Z">
-<meta property="article:modified_time" content="2022-01-30T13:45:14.133Z">
+<meta property="article:modified_time" content="2022-02-02T14:13:18.782Z">
 <meta property="article:author" content="eW1z4rd">
-<meta property="article:tag" content="内网渗透">
+<meta property="article:tag" content="LLMNR">
 <meta property="article:tag" content="Windows">
+<meta property="article:tag" content="名称解析">
 <meta property="article:tag" content="NetBIOS">
 <meta property="article:tag" content="DNS">
-<meta property="article:tag" content="LLMNR">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://ew1z4rd.github.io/img/Windows%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6%E5%8F%8A%E7%BC%BA%E9%99%B7%E5%88%A9%E7%94%A8/2019-08-06_094123.png">
   
@@ -219,11 +219,19 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      38 分钟
+      13 分钟
     </span>
   
 
   
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
   
 </div>
 
@@ -285,7 +293,7 @@
 <blockquote>
 <p>NBNS（NetBIOS Name Service，NetBIOS 域名服务器），类似于 TCP/IP 协议中的 DNS，它负责查找目标机器相应的节点地址（TCP/IP协议中为IP地址），并赋予一个 NetBIOS 名称。</p>
 </blockquote>
-<p>由于 NetBIOS 协议进行名称解析是发送的 <strong>UDP 广播包</strong>，这样做虽然速度快且无需额外的配置，但是广播包不能跨越网域同时也会增加一些网络流量，因此微软在后来推出了 <strong>WINS（Windows Internet Name Service，Windows 网络名称服务）</strong>服务器，当计算机配置为使用 WINS 服务器进行名称解析时，客户机将直接和 WINS 服务器进行<strong>单播</strong>通讯，这样就可以弥补 NetBIOS 协议使用广播进行名称解析的不足。</p>
+<p>由于 NetBIOS 协议进行名称解析是发送的 <strong>UDP 广播包</strong>，这样做虽然速度快且无需额外的配置，但是广播包不能跨越网域同时也会增加一些网络流量，因此微软在后来推出了 <strong>WINS（Windows Internet Name Service，Windows 网络名称服务）</strong>服务器，当计算机配置为使用 WINS 服务器进行名称解析时，客户机将直接和 WINS 服务器进行 <strong>单播</strong> 通讯，这样就可以弥补 NetBIOS 协议使用广播进行名称解析的不足。</p>
 <p>综上所述，NetBIOS 协议进行名称解析的过程如下：</p>
 <ul>
 <li>检查本地 NetBIOS 缓存；</li>
@@ -309,12 +317,10 @@
 <li>如果发送广播后无任何主机响应则请求失败。</li>
 </ul>
 <h2 id="0x02-Windows-系统名称解析顺序"><a href="#0x02-Windows-系统名称解析顺序" class="headerlink" title="0x02 Windows 系统名称解析顺序"></a>0x02 Windows 系统名称解析顺序</h2><p>影响 Windows 系统名称解析的两个因素，分别是：<strong>操作系统版本</strong> 和 <strong>网络节点模式</strong>。</p>
-<p><strong>操作系统版本</strong></p>
-<p>从上述一小节中，可以发现并非所有的操作系统版本都支持上述三种协议。</p>
+<h3 id="操作系统版本"><a href="#操作系统版本" class="headerlink" title="操作系统版本"></a>操作系统版本</h3><p>从上述一小节中，可以发现并非所有的操作系统版本都支持上述三种协议。</p>
 <p>Windows 2K，XP，2K3 只支持 DNS 和 NetBIOS。 所以此类版本的 Windows 都是先进行 DNS 名称解析，如果 DNS 解析名称失败，才会进行 NetBIOS 名称解析。</p>
 <p>Windows Vista 之后（包括 2K8，Win7，Win8.x，Win10）都支持上述三种协议，在这类 Windows系统中的名称解析顺序为：先进行 DNS 名称解析，如果 DNS 解析名称失败，则会使用 LLMNR 进行名称解析，最后才会使用 NetBIOS 名称解析。</p>
-<p><strong>网络节点模式</strong></p>
-<p>还有一种影响 Windows 系统名称解析的一个因素就是当前主机的网络节点模式。</p>
+<h3 id="网络节点模式"><a href="#网络节点模式" class="headerlink" title="网络节点模式"></a>网络节点模式</h3><p>还有一种影响 Windows 系统名称解析的一个因素就是当前主机的网络节点模式。</p>
 <blockquote>
 <p> 使用 ipconfig /all命令查看本机的网络节点模式。</p>
 </blockquote>
@@ -386,15 +392,15 @@
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a>
+                      <a class="hover-with-bg" href="/tags/LLMNR/">LLMNR</a>
                     
                       <a class="hover-with-bg" href="/tags/Windows/">Windows</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90/">名称解析</a>
                     
                       <a class="hover-with-bg" href="/tags/NetBIOS/">NetBIOS</a>
                     
                       <a class="hover-with-bg" href="/tags/DNS/">DNS</a>
-                    
-                      <a class="hover-with-bg" href="/tags/LLMNR/">LLMNR</a>
                     
                   </div>
                 
@@ -494,17 +500,17 @@
       
         <!-- 不蒜子统计PV -->
         <span id="busuanzi_container_site_pv" style="display: none">
-            Pageviews: 
+            总访问量: 
             <span id="busuanzi_value_site_pv"></span>
-             times
+             次
           </span>
       
       
         <!-- 不蒜子统计UV -->
         <span id="busuanzi_container_site_uv" style="display: none">
-            Total Visitors: 
+            总访客数: 
             <span id="busuanzi_value_site_uv"></span>
-             persons
+             人
           </span>
       
     

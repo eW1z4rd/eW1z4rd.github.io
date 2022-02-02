@@ -26,7 +26,7 @@
 <meta property="og:description" content="Hexo 虽然好用，但配置主题时遇到的坑确实是挺多的，网上大部分的回答都是复制粘贴、良莠不齐，所以把自己优化 yilia 主题的过程整理了一下，希望后来的人可以少走弯路。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2019-07-20T08:23:30.000Z">
-<meta property="article:modified_time" content="2022-01-30T14:09:31.652Z">
+<meta property="article:modified_time" content="2022-02-02T13:51:55.438Z">
 <meta property="article:author" content="eW1z4rd">
 <meta property="article:tag" content="Hexo">
 <meta property="article:tag" content="yilia">
@@ -209,11 +209,19 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      55 分钟
+      19 分钟
     </span>
   
 
   
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
   
 </div>
 
@@ -304,7 +312,7 @@
 </ul>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Gitalk</span><br><span class="hljs-attr">gitalk:</span> <br>  <span class="hljs-attr">enable:</span> <span class="hljs-literal">true</span><br>  <span class="hljs-attr">clientID:</span> <span class="hljs-string">&#x27;690107f290505440a443&#x27;</span>  <span class="hljs-comment">#  Github 生成</span><br>  <span class="hljs-attr">clientSecret:</span> <span class="hljs-string">&#x27;a05e41d3ce002564284f3615e37fec2ea2b0cd51&#x27;</span>  <span class="hljs-comment">#  Github 生成</span><br>  <span class="hljs-attr">repo:</span> <span class="hljs-string">&#x27;ew1z4rd.github.io&#x27;</span>  <span class="hljs-comment"># 用户名.github.io</span><br>  <span class="hljs-attr">owner:</span> <span class="hljs-string">&#x27;ew1z4rd&#x27;</span>  <span class="hljs-comment"># 用户名</span><br>  <span class="hljs-attr">admin:</span> <span class="hljs-string">&#x27;ew1z4rd&#x27;</span>  <span class="hljs-comment"># 用户名</span><br>  <span class="hljs-attr">distractionFreeMode:</span> <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
 
-<h3 id="关于访问-litten-me-9005"><a href="#关于访问-litten-me-9005" class="headerlink" title="关于访问 litten.me:9005"></a>关于访问 litten.me:9005</h3><p>主题作者为了更好地完善这个主题，有时会收集用户的客户端信息，目前作者关闭了服务器，这个脚本会导致博客持续加载，解决方法是将 <code>themes/yilia/source/main.0cf68a.js</code> 里面的 <code>//litten.me:9005/badjs/</code> 注释掉，详情见：<a target="_blank" rel="noopener" href="https://github.com/litten/hexo-theme-yilia/issues/580">https://github.com/litten/hexo-theme-yilia/issues/580</a></p>
+<h3 id="关于-litten-me-9005"><a href="#关于-litten-me-9005" class="headerlink" title="关于 litten.me:9005"></a>关于 litten.me:9005</h3><p>主题作者为了更好地完善这个主题，有时会收集用户的客户端信息，目前作者关闭了服务器，这个脚本会导致博客持续加载，解决方法是将 <code>themes/yilia/source/main.0cf68a.js</code> 里面的 <code>//litten.me:9005/badjs/</code> 注释掉，详情见：<a target="_blank" rel="noopener" href="https://github.com/litten/hexo-theme-yilia/issues/580">https://github.com/litten/hexo-theme-yilia/issues/580</a></p>
 <h2 id="Hexo-使用"><a href="#Hexo-使用" class="headerlink" title="Hexo 使用"></a>Hexo 使用</h2><h3 id="标签"><a href="#标签" class="headerlink" title="标签"></a>标签</h3><p>tag 对应的是文章的标签，在需要标识多个标签时，使用如下语法：<code>tags: [tag1, tag2, tag3]</code></p>
 <h3 id="截断"><a href="#截断" class="headerlink" title="截断"></a>截断</h3><p>如果不使用文章截断，会默认在主页显示整篇文章，可以在 md 文件中需要做截断的地方使用 <code>&lt;!--more--&gt;</code> 标记。</p>
 <h3 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs shell">hexo new &quot;postName&quot;  # 新建文章<br>hexo new page &quot;pageName&quot;  # 新建页面<br>hexo clean  # 清除缓存文件和静态文件（public）<br>hexo generate  # 生成静态页面至 public 目录<br>hexo server  # 在本地服务器运行<br>hexo deploy  # 将.deploy_git 目录部署到 GitHub<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> 简写：</span><br>hexo n == hexo new<br>hexo g == hexo generate<br>hexo s == hexo server<br>hexo d == hexo deploy<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> 常用复合命令：</span><br>hexo d -g<br>hexo s -g<br></code></pre></td></tr></table></figure>
@@ -433,17 +441,17 @@
       
         <!-- 不蒜子统计PV -->
         <span id="busuanzi_container_site_pv" style="display: none">
-            Pageviews: 
+            总访问量: 
             <span id="busuanzi_value_site_pv"></span>
-             times
+             次
           </span>
       
       
         <!-- 不蒜子统计UV -->
         <span id="busuanzi_container_site_uv" style="display: none">
-            Total Visitors: 
+            总访客数: 
             <span id="busuanzi_value_site_uv"></span>
-             persons
+             人
           </span>
       
     
