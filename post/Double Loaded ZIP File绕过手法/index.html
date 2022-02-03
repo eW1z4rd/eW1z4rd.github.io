@@ -28,10 +28,10 @@
 <meta property="og:image" content="https://ew1z4rd.github.io/img/DoubleLoadedZIPFile%E7%BB%95%E8%BF%87%E6%89%8B%E6%B3%95/6a0133f264aa62970b0240a4983f91200c-800wi.jpg">
 <meta property="og:image" content="https://ew1z4rd.github.io/img/DoubleLoadedZIPFile%E7%BB%95%E8%BF%87%E6%89%8B%E6%B3%95/8754535-34c5342c1f4951b2.png">
 <meta property="article:published_time" content="2019-12-07T07:02:29.000Z">
-<meta property="article:modified_time" content="2022-01-31T01:54:09.376Z">
+<meta property="article:modified_time" content="2022-02-03T13:52:24.497Z">
 <meta property="article:author" content="eW1z4rd">
-<meta property="article:tag" content="exploit">
 <meta property="article:tag" content="zip">
+<meta property="article:tag" content="漏洞利用">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://ew1z4rd.github.io/img/DoubleLoadedZIPFile%E7%BB%95%E8%BF%87%E6%89%8B%E6%B3%95/6a0133f264aa62970b0240a4983f91200c-800wi.jpg">
   
@@ -252,24 +252,24 @@
             <h1 style="display: none">Double Loaded ZIP File 绕过手法</h1>
             
             <div class="markdown-body">
-              <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>大多数通过邮件传播的恶意软件都是打包为 ZIP、RAR、7z 等方式进行传播的。近日，研究人员发现了一个新型的恶意文件压缩方式，即 Double Loaded Zip File 双加载 ZIP 文件。</p>
+              <h2 id="0x00-概述"><a href="#0x00-概述" class="headerlink" title="0x00 概述"></a>0x00 概述</h2><p>大多数通过邮件传播的恶意软件都是打包为 ZIP、RAR、7z 等方式进行传播的。近日，研究人员发现了一个新型的恶意文件压缩方式，即 Double Loaded Zip File 双加载 ZIP 文件。</p>
 <p>就本例而言，他包含有两个 ZIP 文件结构（2 个 EOCD）。第一个 ZIP 结构中包含有一个无恶意的 PNG 格式的图像文件 order.jpg（不是扩展名显示的 jpeg 格式），order.jpg 实际上一个诱饵文件，用来隐藏另一个 ZIP 结构的内容。第二个 ZIP 结构中包含 SHIPPING_MX00034900_PL_INV_pdf.exe，其实是一个远程木马 NanoCore RAT。</p>
 <p>很明显，攻击者想尝试使用这种 dual archive 的方式来绕过安全扫描。</p>
-<h2 id="文件特征"><a href="#文件特征" class="headerlink" title="文件特征"></a>文件特征</h2><ol>
+<h2 id="0x01-文件特征"><a href="#0x01-文件特征" class="headerlink" title="0x01 文件特征"></a>0x01 文件特征</h2><ol>
 <li>ZIP 文件的文件大小明显大于其压缩前的内容；</li>
 <li>ZIP 文件的压缩方式都为 0008（deflate）；</li>
 <li>ZIP 文件中有两个 End of Central Directory (EOCD) 标志，这表明存在两个独立的 ZIP 结构；</li>
 <li>ZIP 文件 EOCD 标志后的 “核心目录结构总数” 都为 0001。</li>
 </ol>
 <p><img src="/img/DoubleLoadedZIPFile%E7%BB%95%E8%BF%87%E6%89%8B%E6%B3%95/6a0133f264aa62970b0240a4983f91200c-800wi.jpg" srcset="/img/loading.gif" lazyload alt="ZIP_attachment"></p>
-<h2 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h2><p>只有在用户使用某些特定的压缩工具时才会成功，比如 PowerArchiver、WinRAR 和 7-Zip 的某些版本。</p>
+<h2 id="0x02-利用条件"><a href="#0x02-利用条件" class="headerlink" title="0x02 利用条件"></a>0x02 利用条件</h2><p>只有在用户使用某些特定的压缩工具时才会成功，比如 PowerArchiver、WinRAR 和 7-Zip 的某些版本。</p>
 <p>![The ZIP content as per the archiving tools](/img/Double Loaded ZIP File绕过手法/6a0133f264aa62970b0240a4e62353200b-700wi.jpg)</p>
 <h2 id="检测方法"><a href="#检测方法" class="headerlink" title="检测方法"></a>检测方法</h2><p>正常情况下 ZIP 压缩文件<strong>有且只有</strong>一个 EOCD 标志，存在于整个压缩包的结尾。因此，可以根据 ZIP 文件中<strong>是否存在两个及两个以上的目录结束标志（EOCD，End of Central Directory）</strong>，来检测是否存在 Double Loaded Zip File。</p>
 <blockquote>
 <p>EOCD：504B0506</p>
 </blockquote>
 <h2 id="附录：ZIP-文件格式分析"><a href="#附录：ZIP-文件格式分析" class="headerlink" title="附录：ZIP 文件格式分析"></a>附录：ZIP 文件格式分析</h2><p>通常情况下，我们所用 ZIP 文件格式包含有三个部分：<strong>压缩源文件数据区、压缩源文件目录区、压缩源文件目录结束标志</strong>。当 ZIP 压缩的文件不止一个时，压缩源文件数据区将会有多组 **[文件头+文件数据+数据描述符]**，ZIP 对每个文件都进行了独立压缩，故每个压缩的文件都将对应一条记录。</p>
-<p><img src="/img/DoubleLoadedZIPFile%E7%BB%95%E8%BF%87%E6%89%8B%E6%B3%95/8754535-34c5342c1f4951b2.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p><img src="/img/DoubleLoadedZIPFile%E7%BB%95%E8%BF%87%E6%89%8B%E6%B3%95/8754535-34c5342c1f4951b2.png" srcset="/img/loading.gif" lazyload></p>
 <h3 id="Local-file-header-文件头"><a href="#Local-file-header-文件头" class="headerlink" title="Local file header 文件头"></a>Local file header 文件头</h3><p>文件头主要用于表示此文件的开始，记录了此文件压缩的信息，具体字段的含义如下表。（注：偏移量为十进制）</p>
 <table>
 <thead>
@@ -522,7 +522,7 @@
                     
                       <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a>
                     
-                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/">漏洞利用</a>
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">漏洞分析</a>
                     
                   </div>
                 
@@ -530,9 +530,9 @@
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/exploit/">exploit</a>
-                    
                       <a class="hover-with-bg" href="/tags/zip/">zip</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/">漏洞利用</a>
                     
                   </div>
                 
