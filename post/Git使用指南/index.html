@@ -1,0 +1,892 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/global/favicon.ico">
+  <link rel="icon" href="/img/global/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="eW1z4rd">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Git 是目前世界上最先进的分布式版本控制系统，本文详细介绍了 Git 在单人模式和多人协作下的基本概念、使用方式和常用指令，最后对比了几种最流行的 Git 协同模型，可以更高效地进行团队开发。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Git 使用指南">
+<meta property="og:url" content="https://ew1z4rd.github.io/post/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/index.html">
+<meta property="og:site_name" content="栖丘">
+<meta property="og:description" content="Git 是目前世界上最先进的分布式版本控制系统，本文详细介绍了 Git 在单人模式和多人协作下的基本概念、使用方式和常用指令，最后对比了几种最流行的 Git 协同模型，可以更高效地进行团队开发。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-stage.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210113170457853.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210111110814187.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210104142317464.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-diff.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210111143233457.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210111143215762.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/4428238-6dbab74ae9ad2e1f.gif">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-checkout.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/2018030919282196.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/2926d47044d764c6b291f07461b9a2d0_720w.jpg">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/7e2f258b5e5417cda3f7ff2bd0fc01c8_720w.jpg">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210115183051717.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bg2018122402.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/011500266295799.jpg">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210104195816154.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-2e8b31d4cef104ca.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-c35cfff72407266e.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-131d038fa47a30f6.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/what_is_trunk.jpg">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/1713192-20190905112552397-1416856692.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/1713192-20190905112630354-1899396857.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-485066c088e41b1a.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-ba97394474c5dd8b.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-8bd4aa2579dcf341.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-588644ba9ef509bc.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210105165447478.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-model@2x.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bVbgRBo.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bVbgRBD.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bVbgRBI.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-9819c933dc5873fb.png">
+<meta property="article:published_time" content="2020-12-18T03:52:10.000Z">
+<meta property="article:modified_time" content="2022-02-06T06:43:19.919Z">
+<meta property="article:author" content="eW1z4rd">
+<meta property="article:tag" content="工具">
+<meta property="article:tag" content="Git">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ew1z4rd.github.io/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-stage.png">
+  
+  
+  <title>Git 使用指南 - 栖丘</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"ew1z4rd.github.io","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"f307ed711fcf86fe5ceb149239b6cfc3","google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>eW1z4rd&#39;s space</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/global/post-bg.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Git 使用指南">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-12-18 11:52" pubdate>
+        2020年12月18日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      12k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      34 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Git 使用指南</h1>
+            
+            <div class="markdown-body">
+              <p>Git 是目前世界上最先进的 <strong>分布式</strong> 版本控制系统，本文详细介绍了 Git 在单人模式和多人协作下的基本概念、使用方式和常用指令，最后对比了几种最流行的 Git 协同模型，可以更高效地进行团队开发。</p>
+<h2 id="版本控制系统"><a href="#版本控制系统" class="headerlink" title="版本控制系统"></a>版本控制系统</h2><h3 id="SVN-集中式版本控制系统"><a href="#SVN-集中式版本控制系统" class="headerlink" title="SVN 集中式版本控制系统"></a>SVN 集中式版本控制系统</h3><ul>
+<li>版本库放在中央服务器</li>
+<li>必须联网才能工作</li>
+<li>服务器磁盘故障存在数据丢失风险</li>
+</ul>
+<h3 id="Git-分布式版本控制系统"><a href="#Git-分布式版本控制系统" class="headerlink" title="Git 分布式版本控制系统"></a>Git 分布式版本控制系统</h3><ul>
+<li>没有中央服务器，每台个人PC都有一个完整的版本库</li>
+<li>工作时无需联网</li>
+<li>通过把各自的修改推给对方进行协作</li>
+<li>服务器数据丢失可用任意一个代码仓库恢复，宕机期间也可以提交代码到本地仓库</li>
+<li>安全性强，Git管理的每一个文件、目录、提交等都拥有一个SHA-1哈希值</li>
+</ul>
+<h2 id="Git-独奏"><a href="#Git-独奏" class="headerlink" title="Git 独奏"></a>Git 独奏</h2><h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><h4 id="暂存区"><a href="#暂存区" class="headerlink" title="暂存区"></a><a target="_blank" rel="noopener" href="http://www.worldhello.net/got/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/02-git-solo/020-git-stage.html#git-stage">暂存区</a></h4><ol>
+<li>暂存区一般称为stage或index，只有添加到暂存区的文件才可以被提交。</li>
+<li>暂存区保存在<code>./img/Git使用指南/index</code>文件中，是一个包含文件索引的目录树，有类似工作区的目录结构，其中记录了文件名、文件的状态信息等。</li>
+<li>具体的文件内容保存在git对象库<code>./img/Git使用指南/objects</code>目录中，文件索引建立了文件和对象库中对象实体之间的对应关系。</li>
+</ol>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-stage.png" srcset="/img/loading.gif" lazyload alt="git-stage"></p>
+<h4 id="HEAD"><a href="#HEAD" class="headerlink" title="HEAD"></a><a target="_blank" rel="noopener" href="http://www.zsythink.net/archives/3412">HEAD</a></h4><ol>
+<li><p>可以把<code>HEAD</code>理解成一个指针，<code>HEAD</code>指针通常指向当前所在分支的分支指针，分支指针总是指向当前分支的最新提交，即通常情况下<code>HEAD</code>指针总是指向了当前分支的最新提交（通过分支指针间接指向）。</p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210113170457853.png" srcset="/img/loading.gif" lazyload alt="从master检出test分支"></p>
+</li>
+<li><p><code>HEAD</code>指针和分支指针的当前指向，分别保存在<code>./img/Git使用指南/HEAD</code>文件和<code>./img/Git使用指南/refs/heads/&lt;branch&gt;</code>文件中。在git中，可以在<code>./img/Git使用指南/refs</code>目录下找到一系列含有SHA-1值的文件，这类文件也被称为“引用” （refs或references）。</p>
+<blockquote>
+<p>$ cat ./img/Git使用指南/HEAD<br>ref: refs/heads/test</p>
+<p>$ cat ./img/Git使用指南/refs/heads/test<br>6f396a68315694be320949fba3f6a57d5e1c318f</p>
+</blockquote>
+</li>
+<li><p>分离头指针（detached HEAD），即<code>HEAD</code>指针没有指向分支指针，而是直接指向了某个具体的提交。一般用来快速地基于某个提交进行一些实验或者测试，如果对结果满意就保留，否则就丢弃。</p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210111110814187.png" srcset="/img/loading.gif" lazyload alt="检出某个提交时HEAD指针的变化"></p>
+</li>
+<li><p>在写法上，通常用<code>HEAD</code>表示当前版本，<code>HEAD^</code>是上一个版本，<code>HEAD^^</code>是上上一个版本，上100个版本可以写作<code>HEAD~100</code>。</p>
+</li>
+</ol>
+<h3 id="创建仓库"><a href="#创建仓库" class="headerlink" title="创建仓库"></a>创建仓库</h3><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210104142317464.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>git init：初始化仓库</li>
+<li>git clone：克隆远程仓库</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br></pre></div></td><td class="code"><pre><code class="hljs bash">git <span class="hljs-built_in">clone</span> &lt;repo&gt; [&lt;dir&gt;] --depth=1 -b &lt;branch&gt; --single-branch  <span class="hljs-comment"># 克隆指定分支最近的一次提交</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git config：修改配置文件（优先级：local &gt; global &gt; system）</li>
+</ul>
+<blockquote>
+<p>初始化结果：生成.git文件（本地版本库），用户名和邮件地址配置成功（不做校验）</p>
+</blockquote>
+<h3 id="文件变更"><a href="#文件变更" class="headerlink" title="文件变更"></a>文件变更</h3><ul>
+<li>git add：添加文件到暂存区</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">git add [file1] [file2] ... / [dir]<br>git add ./-A  <span class="hljs-comment"># 添加所有已跟踪和未跟踪文件的变更</span><br>git add -u  <span class="hljs-comment"># 更新已跟踪的文件变更（修改、删除）</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git commit：提交暂存区文件到本地仓库</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">git commit -m <span class="hljs-string">&quot;message&quot;</span><br>git commit -m <span class="hljs-string">&quot;message&quot;</span> --amend  <span class="hljs-comment"># 追加提交</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git status：查看工作区和暂存区之间的文件变更状态</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">git status  <span class="hljs-comment"># 标准显示</span><br>git status -s  <span class="hljs-comment"># 简洁显示</span><br>git status -v  <span class="hljs-comment"># 详细显示（文件内容改动）</span><br>git status --ignored  <span class="hljs-comment"># 显示被忽略的文件</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git diff：比较文件内容差异</li>
+</ul>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-diff.png" srcset="/img/loading.gif" lazyload alt="git-diff"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">git diff  <span class="hljs-comment"># 比较工作区和暂存区</span><br>git diff HEAD/&lt;branch&gt;/&lt;commit&gt;  <span class="hljs-comment"># 比较工作区和HEAD/branch/commit</span><br>git diff --cached  <span class="hljs-comment"># 比较暂存区和HEAD</span><br>git diff -- &lt;file&gt;/&lt;path&gt; <span class="hljs-comment"># 比较文件/目录差异</span><br>git diff &lt;commit1&gt; &lt;commit2&gt; -- &lt;paths&gt; <span class="hljs-comment"># 比较两个commit之间的具体文件差异</span><br>git diff --<span class="hljs-built_in">stat</span>  <span class="hljs-comment"># 摘要显示</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>当执行<code>git status</code>或<code>git diff</code>命令扫描工作区改动的时候，git会先依据<code>./img/Git使用指南/index</code>文件中记录的（已跟踪文件的）时间戳、长度等信息判断工作区文件是否改变。如果文件时间戳发生改变，则文件内容<strong>可能</strong>被修改了，此时再打开文件，对比文件内容，判断文件是否真正被更改。这也是Git高效的因素之一。</p>
+</blockquote>
+<ul>
+<li>git rm：删除文件，并自动变更暂存区</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">git rm [&lt;options&gt;] [--] &lt;file&gt;...<br>git rm --cached --force -r &lt;file&gt;  <span class="hljs-comment"># 移除不需要跟踪的文件（不删除工作区文件）</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git ls-files：查看工作区和暂存区的文件信息</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">git ls-files -c  <span class="hljs-comment"># 显示已缓存到暂存区的文件（默认）</span><br>git ls-files -s  <span class="hljs-comment"># 显示暂存区的文件对象信息（模式位，文件哈希值，暂存区编号，文件名）</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="版本切换"><a href="#版本切换" class="headerlink" title="版本切换"></a>版本切换</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://git-scm.com/book/zh/v2/Git-%E5%9F%BA%E7%A1%80-%E6%9F%A5%E7%9C%8B%E6%8F%90%E4%BA%A4%E5%8E%86%E5%8F%B2">git log</a>：查看提交历史（显示当前<code>HEAD</code>之前的提交历史）</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs bash">git <span class="hljs-built_in">log</span>  <span class="hljs-comment"># 从近到远列出所有提交记录</span><br><span class="hljs-comment"># 显示参数</span><br>--<span class="hljs-built_in">stat</span>  <span class="hljs-comment"># 显示文件差异（行数统计）</span><br>-p  <span class="hljs-comment"># 显示文件差异（详细的具体改动）</span><br>--oneline  <span class="hljs-comment"># 简洁显示</span><br>--graph  <span class="hljs-comment"># 以ASCII图形模式显示</span><br>–-pretty  <span class="hljs-comment"># 格式化输出 %h-简短哈希字符串 %s-提交说明</span><br><span class="hljs-comment"># 筛选参数</span><br>-n  <span class="hljs-comment"># 限定数量</span><br>--since, --after  <span class="hljs-comment"># 限定指定时间之后的提交</span><br>--until, --before  <span class="hljs-comment"># 限定指定时间之前的提交</span><br>--author  <span class="hljs-comment"># 限定作者</span><br>--grep  <span class="hljs-comment"># 搜索commit关键字</span><br>--no-merges  <span class="hljs-comment"># 过滤掉merge commit</span><br>git <span class="hljs-built_in">log</span> --/commit/branch/tag  <span class="hljs-comment"># 限定路径/提交/分支/标签</span><br><span class="hljs-comment"># 示例</span><br>git <span class="hljs-built_in">log</span> --pretty=<span class="hljs-string">&quot;%h - %s&quot;</span> --author=<span class="hljs-string">&#x27;Junio C Hamano&#x27;</span> --since=<span class="hljs-string">&quot;2008-10-01&quot;</span> --before=<span class="hljs-string">&quot;2008-11-01&quot;</span> --no-merges -- <span class="hljs-built_in">test</span>/<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git reflog：查看命令历史</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git reflog  <span class="hljs-comment"># 可以查看已被删除的commit记录和reset操作（用来恢复本地错误操作）</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git reset：重置</li>
+</ul>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210111143233457.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210111143215762.png" srcset="/img/loading.gif" lazyload></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">git reset [&lt;commit&gt;] [--] &lt;paths&gt;...  <span class="hljs-comment"># 不改变引用（值），替换暂存区中的文件，默认值为HEAD</span><br>git reset [--mixed|--soft|--hard] [&lt;commit&gt;]  <span class="hljs-comment"># 改变引用，有不同的选项</span><br>git reset HEAD  <span class="hljs-comment"># 撤销对暂存区的修改（将暂存区恢复到最近提交的状态，默认使用--mixed选项）</span><br>git reset --hard HEAD  <span class="hljs-comment"># 将工作区、暂存区都恢复到最近提交的状态</span><br>git reset --soft HEAD^  <span class="hljs-comment"># 只修改引用，不修改工作区、暂存区文件</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>reset实质：重置引用（改变<code>HEAD</code>指针所指向的分支指针指向，<code>HEAD</code>指针始终指向当前分支指针）</p>
+</blockquote>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/4428238-6dbab74ae9ad2e1f.gif" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>git revert：版本回滚</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git revert &lt;commit&gt;  <span class="hljs-comment"># 回滚到指定的版本，回滚也会作为一次提交进行保存（适用于多人协同）</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>reset和revert的区别：git reset是回到某次commit，在本次commit之后的修改都会被删除；git revert是在最近一次commit之后生成一个新的commit，之前的所有commit都会被保留。</p>
+</blockquote>
+<h2 id="Git-和声"><a href="#Git-和声" class="headerlink" title="Git 和声"></a>Git 和声</h2><h3 id="分支管理"><a href="#分支管理" class="headerlink" title="分支管理"></a>分支管理</h3><ul>
+<li>git branch：分支管理</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">git branch  <span class="hljs-comment"># 查看本地分支</span><br>git branch &lt;branch&gt; <span class="hljs-comment"># 创建本地分支</span><br>git branch -r  <span class="hljs-comment"># 查看远程分支</span><br>git branch -a  <span class="hljs-comment"># 查看全部分支</span><br>git branch -d &lt;branch&gt;  <span class="hljs-comment"># 删除分支</span><br>git branch -vv <span class="hljs-comment"># 查看本地分支和远程分支的关联关系</span><br>git branch -u/--set-upstream-to origin/&lt;远程分支名&gt; [&lt;本地分支名&gt;]<br><span class="hljs-comment"># 建立本地分支（默认为当前分支）与远程分支的关联</span><br>git branch --unset-upstream  <span class="hljs-comment"># 取消当前本地分支与远程分支的映射关系</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git checkout：检出</li>
+</ul>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-checkout.png" srcset="/img/loading.gif" lazyload alt="git-checkout"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">git checkout [&lt;commit&gt;] [--] &lt;paths&gt;...  <span class="hljs-comment"># 不改变HEAD指针，替换工作区中的文件，默认值是暂存区</span><br><span class="hljs-comment"># 省略&lt;commit&gt;时用暂存区文件覆盖工作区，不省略&lt;commit&gt;时用指定提交中的文件覆盖暂存区和工作区中对应的文件</span><br><span class="hljs-comment"># 用法：git checkout -- filename  // 放弃单个文件修改</span><br><span class="hljs-comment">#      git checkout –- . 或 git checkout .  // 撤销一切本地修改</span><br>git checkout &lt;commit&gt;  <span class="hljs-comment"># 检出某个提交，改变HEAD指针并进入“分离头指针”状态</span><br>git checkout &lt;branch&gt;  <span class="hljs-comment"># 改变HEAD指针，检出branch分支（完成图中的三个步骤）</span><br>git checkout -b &lt;new_branch&gt; <span class="hljs-comment"># 改变HEAD指针，创建并检出到新分支</span><br>git checkout -b &lt;本地分支名&gt; origin/&lt;远程分支名&gt;  <span class="hljs-comment"># 在本地创建和远程feature分支的对应分支</span><br><span class="hljs-comment"># 例：git checkout -b dev origin/feature 在本地创建和远程feature分支的对应dev分支</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>checkout实质：重置<code>HEAD</code></p>
+</blockquote>
+<h3 id="远程同步"><a href="#远程同步" class="headerlink" title="远程同步"></a><a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2014/06/git_remote.html">远程同步</a></h3><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/2018030919282196.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>git remote：操作远程仓库</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">git remote  <span class="hljs-comment"># 查看关联的远程仓库名称</span><br>git remote -v  <span class="hljs-comment"># 查看关联的远程仓库的详细信息</span><br>git remote add &lt;shortname&gt; &lt;url&gt;  <span class="hljs-comment"># 关联远程仓库，使用&lt;shortname&gt;指定一个仓库别名（通常为origin）</span><br>git remote rm/remove &lt;shortname&gt;  <span class="hljs-comment"># 删除远程仓库关联</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>远程分支通常写作<code>远程主机名/分支名</code>，如<code>origin/master</code>，保存在<code>./img/Git使用指南/refs/remotes/origin</code>目录下</p>
+</blockquote>
+<ul>
+<li>git fetch：获取远程仓库中的最新版本到本地</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">git fetch &lt;远程主机名&gt;  <span class="hljs-comment"># 取回远程更新（所有分支），不改变本地仓库文件</span><br>git fetch &lt;远程主机名&gt; &lt;分支名&gt;  <span class="hljs-comment"># 指定分支</span><br>git fetch origin tag &lt;tagname&gt;  <span class="hljs-comment"># 拉取远程分支的指定版本</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git pull：获取远程仓库中的最新版本并merge到本地</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 分支拉取/推送顺序的写法是&lt;来源地&gt;:&lt;目的地&gt;</span><br>git pull &lt;远程主机名&gt; &lt;远程分支名&gt;:&lt;本地分支名&gt;<br>git pull origin feature:dev  <span class="hljs-comment"># 从远程库拉取分支，进行合并</span><br>git pull  <span class="hljs-comment"># 快速拉取（等同于git fetch + git merge）</span><br>git pull -p  <span class="hljs-comment"># 拉取时在本地删除远程已经删除的分支</span><br>git pull --rebase &lt;远程主机名&gt; &lt;远程分支名&gt;:&lt;本地分支名&gt;  <span class="hljs-comment"># 采用rebase模式</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>git pull = git fetch + git merge</p>
+</blockquote>
+<ul>
+<li>git push：推送本地修改到远程仓库</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">git push &lt;远程主机名&gt; &lt;本地分支名&gt;:&lt;远程分支名&gt;<br>git push origin dev:feature  <span class="hljs-comment"># 向远程库推送自己的修改（如果远程分支不存在，则新建）</span><br>git push origin feature  <span class="hljs-comment"># 当前分支与上游分支同名时可省略</span><br>git push  <span class="hljs-comment"># 关联后可直接使用快速推送（推送当前分支，并且当前分支与上游分支同名）</span><br>git push -u/--set-upstream origin &lt;本地分支名&gt;  <span class="hljs-comment"># 推送时添加远程关联</span><br>git push origin --delete &lt;远程分支名&gt;  <span class="hljs-comment"># 删除远程分支</span><br><span class="hljs-comment"># 撤销远程提交：</span><br>git reset --hard &lt;commit&gt;<br>git push origin &lt;本地分支名&gt; --force  <span class="hljs-comment"># 强制覆盖远程版本</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="合并分支"><a href="#合并分支" class="headerlink" title="合并分支"></a>合并分支</h3><ul>
+<li>git merge：合并分支</li>
+</ul>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/2926d47044d764c6b291f07461b9a2d0_720w.jpg" srcset="/img/loading.gif" lazyload></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">git merge &lt;branch&gt; -m <span class="hljs-string">&quot;message&quot;</span>  <span class="hljs-comment"># 合并指定分支到当前分支</span><br>git merge &lt;branch&gt; --no-ff -m <span class="hljs-string">&quot;message&quot;</span>  <span class="hljs-comment"># 不使用Fast-forward模式进行合并</span><br>git merge --abort  <span class="hljs-comment"># 放弃合并（发生冲突时）</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git rebase：变基（衍合分支）</li>
+</ul>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/7e2f258b5e5417cda3f7ff2bd0fc01c8_720w.jpg" srcset="/img/loading.gif" lazyload></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">git rebase &lt;branch&gt; -m <span class="hljs-string">&quot;message&quot;</span>  <span class="hljs-comment"># 衍合指定分支到当前分支</span><br>git rebase &lt;branch&gt; --no-ff -m <span class="hljs-string">&quot;message&quot;</span>  <span class="hljs-comment"># 不使用Fast-forward模式进行合并</span><br>git rebase --<span class="hljs-built_in">continue</span>  <span class="hljs-comment"># 解决代码冲突后，继续进行rebase</span><br>git rebase --abort  <span class="hljs-comment"># 放弃衍合（发生冲突时）</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>merge和rebase的区别：</p>
+<p>git merge会将两个分支的最新一次提交进行合并，发生冲突并解决冲突后，执行<code>git add</code>和<code>git commit</code>，最终会产生一个新的commit。合并的结果为非线性，但只用解决一次冲突。（快进式合并的合并结果为线性，且不产生任何新的commit）</p>
+<p>git rebase会把当前分支的commit放到公共分支的最后面（变基），发生冲突并解决冲突后，执行<code>git add</code>和<code>git rebase --continue</code>，不会产生额外的commit，会改变最近一次commit的hash值。合并的结果呈现为线性，但看不到完整的历史脉络（不要在公共分支使用rebase，否则容易破坏其他人的commit记录），同时rebase的冲突需要一个个解决（把commit打散成patch），一次rebase可能要解决多次冲突。</p>
+</blockquote>
+<ul>
+<li>git cherry-pick：择优挑选</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">git cherry-pick &lt;commit1&gt; &lt;commit2&gt;  <span class="hljs-comment"># 将指定的提交转移到当前分支，并在当前分支产生一个新的提交</span><br>git cherry-pick &lt;commit1&gt;..&lt;commit2&gt;  <span class="hljs-comment"># 将1~2之间的提交都转移到当前分支</span><br>git cherry-pick &lt;branch&gt;  <span class="hljs-comment"># 将指定分支的最近一次提交，转移到当前分支</span><br>git cherry-pick --<span class="hljs-built_in">continue</span>  <span class="hljs-comment"># 解决代码冲突后，继续进行cherry-pick</span><br>git cherry-pick --abort  <span class="hljs-comment"># 放弃合并（发生冲突时）</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>使用merge合并另一个分支的所有变动，使用cherry-pick合并任意分支中的部分提交。</p>
+</blockquote>
+<h3 id="冲突处理"><a href="#冲突处理" class="headerlink" title="冲突处理"></a>冲突处理</h3><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210115183051717.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="Git-进阶"><a href="#Git-进阶" class="headerlink" title="Git 进阶"></a>Git 进阶</h2><h3 id="其他指令"><a href="#其他指令" class="headerlink" title="其他指令"></a>其他指令</h3><ul>
+<li>git tag：标签管理</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">git tag  <span class="hljs-comment"># 查看所有标签</span><br>git tag &lt;tagname&gt; [&lt;commit&gt;]  <span class="hljs-comment"># 创建标签，默认值是HEAD</span><br>git tag -a &lt;tagname&gt; -m <span class="hljs-string">&quot;message&quot;</span>  <span class="hljs-comment"># 添加标签信息</span><br>git tag -d &lt;tagname&gt;  <span class="hljs-comment"># 删除标签</span><br><span class="hljs-comment"># 推送标签（tag）：</span><br>git push origin &lt;tagname&gt;  <span class="hljs-comment"># 推送一个本地标签</span><br>git push origin --tags  <span class="hljs-comment"># 推送全部未推送过的本地标签</span><br>git push origin :refs/tags/&lt;tagname&gt;  <span class="hljs-comment"># 删除远程标签</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>tag实际是一个指向commit的引用，保存在<code>./img/Git使用指南/refs/tags/</code>目录下，可以使用<code>git checkout &lt;tagname&gt;</code>检出</p>
+</blockquote>
+<ul>
+<li>git stage：暂存</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">git stash  <span class="hljs-comment"># 保存当前工作区和暂存区的状态到git栈</span><br>git stash list  <span class="hljs-comment"># 查看git栈中的文件列表</span><br>git stash show  <span class="hljs-comment"># 查看git栈中的文件改动</span><br>git stash pop [stash@&#123;<span class="hljs-variable">$num</span>&#125;]  <span class="hljs-comment"># 从git栈中恢复一个stash（默认为最近的）</span><br>git stash apply [stash@&#123;<span class="hljs-variable">$num</span>&#125;]  <span class="hljs-comment"># 从git栈中恢复一个stash（不删除栈中的内容）</span><br>git stash branch &lt;branch&gt; [stash@&#123;<span class="hljs-variable">$num</span>&#125;]  <span class="hljs-comment"># 基于stash创建分支</span><br>git stash clear  <span class="hljs-comment"># 清空git栈中所有内容</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>git blame：文件追溯</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">git blame &lt;filename&gt;  <span class="hljs-comment"># 查看文件每一行的内容作者</span><br>git blame &lt;filename&gt; -L a,b  <span class="hljs-comment"># 查看文件第a行到第b行之间的内容作者</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2018/12/git-bisect.html">git bisect</a>：二分查找</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">git bisect start &lt;lastCommit&gt; &lt;firstCommit&gt; <span class="hljs-comment"># 指定差错范围（自动切换回之前的版本）</span><br><span class="hljs-comment"># 例：git bisect start HEAD 4d83cf</span><br>git bisect good  <span class="hljs-comment"># 正常</span><br>git bisect bad  <span class="hljs-comment"># 异常</span><br>git bisect reset  <span class="hljs-comment"># 退出查错，回到最近一次的提交</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bg2018122402.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="文件忽略"><a href="#文件忽略" class="headerlink" title="文件忽略"></a>文件忽略</h3><ol>
+<li>使用<code>.gitignore</code>忽略不希望添加到版本库的文件。</li>
+<li><code>.gitignore</code>文件可以放在任何目录。</li>
+<li><code>.gitignore</code>文件<a target="_blank" rel="noopener" href="https://github.com/github/gitignore">模板</a></li>
+<li>忽略语法：<ol>
+<li><code>.gitignore</code>文件中的空行或者以井号（#）开始的行会被忽略。</li>
+<li>可以使用通配符：星号<code>*</code>代表任意多字符，问号<code>?</code>代表一个字符，方括号<code>[abc]</code>代表可选字符。</li>
+<li>如果名称的最前面是一个路径分隔符<code>/</code>，表明要忽略的文件在此目录下，而非子目录的文件。</li>
+<li>如果名称的最后面是一个路径分隔符<code>/</code>，表明要忽略的是整个目录，不忽略同名文件。</li>
+<li>通过在名称的最前面添加一个感叹号<code>!</code>，代表不忽略。</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 示例：</span><br><span class="hljs-comment"># 这是注释行 —— 被忽略</span><br>*.a       <span class="hljs-comment"># 忽略所有以 .a 为扩展名的文件</span><br>!lib.a    <span class="hljs-comment"># 但是 lib.a 文件或者目录不要忽略（即使前面设置了对 *.a 的忽略）</span><br>cache     <span class="hljs-comment"># 忽略所有名称为 cache 的目录和文件</span><br>/TODO     <span class="hljs-comment"># 只忽略当前目录下的 TODO 文件，子目录的 TODO 文件不忽略</span><br>build/    <span class="hljs-comment"># 忽略所有 build/ 目录下的文件</span><br>doc/*.txt <span class="hljs-comment"># 忽略文件如 doc/notes.txt，但是文件如 doc/server/arch.txt 不被忽略</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="常用指令速查"><a href="#常用指令速查" class="headerlink" title="常用指令速查"></a>常用指令速查</h3><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/011500266295799.jpg" srcset="/img/loading.gif" lazyload></p>
+<h2 id="Git-协同模型"><a href="#Git-协同模型" class="headerlink" title="Git 协同模型"></a>Git 协同模型</h2><h3 id="Atlassian：什么是成功的Git-Workflow？"><a href="#Atlassian：什么是成功的Git-Workflow？" class="headerlink" title="Atlassian：什么是成功的Git Workflow？"></a><a target="_blank" rel="noopener" href="https://www.atlassian.com//img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/tutorials/comparing-workflows">Atlassian</a>：什么是成功的Git Workflow？</h3><p>在评估团队的工作流程时，最重要的是要考虑团队的文化。工作流程应该能够提高团队工作的效率，而不是成为限制生产力的负担。评估Git Workflow时应考虑以下几点：</p>
+<ul>
+<li>这个Workflow是否与团队规模相匹配？</li>
+<li>使用这个Workflow是否容易撤销失误和修复错误？</li>
+<li>使用这个Workflow是否会给团队带来新的不必要的认知开销？</li>
+</ul>
+<h3 id="Centralized-Workflow"><a href="#Centralized-Workflow" class="headerlink" title="Centralized Workflow"></a>Centralized Workflow</h3><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210104195816154.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="工作模式"><a href="#工作模式" class="headerlink" title="工作模式"></a>工作模式</h4><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-2e8b31d4cef104ca.png" srcset="/img/loading.gif" lazyload></p>
+<ol>
+<li><strong>管理员</strong>初始化中央存储库（裸存储库） — <code>git init --bare</code></li>
+<li><strong>开发人员</strong>从远程仓库克隆工程到本地仓库 — <code>git clone</code></li>
+<li>在本地仓库编辑文件和提交更新 — <code>git add </code> 和 <code>git commit</code></li>
+<li>Fetch远程仓库已更新的commit到本地仓库，并rebase到已更新的commit的上面 — <code>git fetch</code> 和 <code>git rebase</code> 或 <code>git pull --rebase</code></li>
+<li>Push本地master分支到远程master分支 — <code>git push</code></li>
+</ol>
+<h4 id="处理冲突"><a href="#处理冲突" class="headerlink" title="处理冲突"></a>处理冲突</h4><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-c35cfff72407266e.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>开发人员在执行第四步时，本地提交与远程提交可能会发生冲突，git会暂停rebase过程，需要使用 <code>git status</code> 和 <code>git add</code> 来手动解决冲突。</li>
+</ul>
+<h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>适合从SVN过渡到分布式版本控制系统，无需改变已有的工作流程和团队协作方式。</li>
+<li>简单、直接，完美的线性提交记录。</li>
+<li>适合小型团队。</li>
+</ol>
+<h3 id="Feature-Branch-Workflow"><a href="#Feature-Branch-Workflow" class="headerlink" title="Feature Branch Workflow"></a>Feature Branch Workflow</h3><p>Feature Branch Workflow是对Centralized Workflow的逻辑扩展，其主要思想就是在开发每个功能时都应该创建<strong>一个独立的分支</strong>而不在master分支中进行。由于每个分支是独立且互不影响，这就意味着master分支中不会包含broken code，对持续集成环境很有帮助。</p>
+<h4 id="工作模式-1"><a href="#工作模式-1" class="headerlink" title="工作模式"></a>工作模式</h4><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-131d038fa47a30f6.png" srcset="/img/loading.gif" lazyload></p>
+<ol>
+<li>仍然使用远程仓库和master分支记录官方工程</li>
+<li>开发者为每个功能或问题创建一个单独的feature分支 — <code>git checkout -b</code></li>
+<li>在本地仓库编辑文件和提交更新 — <code>git add </code> 和 <code>git commit</code></li>
+<li>将feature分支推送到远程仓库 — <code>git push</code></li>
+<li>发送pull request来请求管理员是否将feature分支（远程）合并到master分支（远程）</li>
+</ol>
+<h4 id="Pull-Request"><a href="#Pull-Request" class="headerlink" title="Pull Request"></a>Pull Request</h4><ul>
+<li>开发者当完成一项功能后，不会立即将其合并到master分支，而是发起一个pull request请求。</li>
+<li>其他的团队成员接收到请求，可以审查、讨论和修改代码（Code Review）。</li>
+<li>项目管理员合并新增的feature分支到master分支，关闭pull request。</li>
+</ul>
+<h4 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>每个功能都创建一个独立的分支，易于持续集成环境。</li>
+<li>Pull Request机制。</li>
+<li>是一种非常灵活的开发方式。</li>
+</ol>
+<h3 id="TrunkBased-Workflow"><a href="#TrunkBased-Workflow" class="headerlink" title="TrunkBased Workflow"></a>TrunkBased Workflow</h3><p>Trunk based development是<a target="_blank" rel="noopener" href="https://paulhammant.com/2013/04/05/what-is-trunk-based-development/">Paul Hammant</a>在2013年提出的模型，是SVN的基本开发模式。TBD模型由单个master分支（trunk）和许多release分支组成，所有开发都在trunk上进行，使用衍生出的release分支交付。</p>
+<h4 id="工作模式-2"><a href="#工作模式-2" class="headerlink" title="工作模式"></a>工作模式</h4><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/what_is_trunk.jpg" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>在trunk分支开发，开发完成或hotfix后衍生出release分支发布。</li>
+<li>release分支不可修改，每一次更新，都有对应的版本号标签。</li>
+</ul>
+<p><strong>小规模团队：</strong>直接在trunk上进行开发。</p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/1713192-20190905112552397-1416856692.png" srcset="/img/loading.gif" lazyload alt="Simple TrunkBased"></p>
+<p><strong>大规模团队：</strong>从trunk衍生出短期的feature分支进行开发，开发完成后合并回trunk。</p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/1713192-20190905112630354-1899396857.png" srcset="/img/loading.gif" lazyload alt="Complex TrunkBased"></p>
+<h4 id="优点-2"><a href="#优点-2" class="headerlink" title="优点"></a>优点</h4><ol>
+<li><p>模型简单</p>
+</li>
+<li><p>易于持续集成</p>
+</li>
+</ol>
+<h3 id="GitFlow-Workflow"><a href="#GitFlow-Workflow" class="headerlink" title="GitFlow Workflow"></a>GitFlow Workflow</h3><p><a target="_blank" rel="noopener" href="http://nvie.com/posts/a-successful-git-branching-model/">GitFlow Workflow</a>由Vincent Driessen在2010年首次提出并广受欢迎，它定义了围绕项目生命周期设计的严格分支模型。核心思想与Feature Branch Workflow类似，但是给特定的分支赋予了非常具体的角色，并定义它们应如何以及何时进行交互。</p>
+<p>具体而言有四种分支：</p>
+<ul>
+<li>Main Branches</li>
+<li>Feature Branches</li>
+<li>Release Branches</li>
+<li>Hotfix Branches</li>
+</ul>
+<h4 id="工作模式-3"><a href="#工作模式-3" class="headerlink" title="工作模式"></a>工作模式</h4><h5 id="Main-Branches"><a href="#Main-Branches" class="headerlink" title="Main Branches"></a>Main Branches</h5><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-485066c088e41b1a.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><strong>master分支：</strong>用来保存正式的、可在生产环境中部署的代码，每一次更新，都有对应的版本号标签。</li>
+<li><strong>develop分支：</strong>从master分支派生，是每次迭代版本时的共有开发分支。</li>
+</ul>
+<h5 id="Feature-Branches"><a href="#Feature-Branches" class="headerlink" title="Feature Branches"></a>Feature Branches</h5><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-ba97394474c5dd8b.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><strong>feature分支：</strong>用来开发一项新的软件功能。</li>
+<li>develop分支可以同时衍生出多个feature分支。</li>
+<li>当一个feature分支开发完成后，将这个分支上的代码变更合并至develop分支。</li>
+<li>feature分支应该永远不与master分支直接交互。</li>
+</ul>
+<h5 id="Release-Branches"><a href="#Release-Branches" class="headerlink" title="Release Branches"></a>Release Branches</h5><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-8bd4aa2579dcf341.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><strong>release分支：</strong>用来存放准备发布的代码。</li>
+<li>当develop分支开发完成后，可以从develop衍生出一个release分支。</li>
+<li>release分支中不应该添加任何新功能，应仅包含测试、错误修复、文档生成及其他面向发布的任务。</li>
+<li>测试中出现的bug，统一在release分支下进行修改，并推送至远程分支。</li>
+<li>修改内容必须合并回develop分支，上线时从release分支合并到master分支。</li>
+<li>合并后的master应该被标记一个新的版本号。</li>
+</ul>
+<h5 id="Hotfix-Branches"><a href="#Hotfix-Branches" class="headerlink" title="Hotfix Branches"></a>Hotfix Branches</h5><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-588644ba9ef509bc.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><strong>Hotfix分支：</strong>用来快速给已发布产品修复bug或微调功能。</li>
+<li>从master分支直接衍生出来。</li>
+<li>完成bug修复后，合并至master分支以及develop分支。</li>
+<li>合并后的master应该被标记一个新的版本号。</li>
+</ul>
+<h4 id="完整流程"><a href="#完整流程" class="headerlink" title="完整流程"></a>完整流程</h4><p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/image-20210105165447478.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/git-model@2x.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="优点-3"><a href="#优点-3" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>为管理大型项目提供了一个强大的框架，可用于大规模的团队协作场景。</li>
+<li>非常适合有计划发布周期的项目，可帮助实施持续交付下的DevOps最佳实践。</li>
+</ol>
+<h4 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h4><p>企业级开发，大型团队，敏捷要求相对较低（分支存活时间长短不一、合并繁琐、依赖管理）。</p>
+<h3 id="AoneFlow-Workflow"><a href="#AoneFlow-Workflow" class="headerlink" title="AoneFlow Workflow"></a>AoneFlow Workflow</h3><p>AoneFlow只使用三种分支类型：<strong>master分支、feature分支、release分支</strong>，以及三条基本规则。</p>
+<h4 id="工作模式-4"><a href="#工作模式-4" class="headerlink" title="工作模式"></a>工作模式</h4><p><strong>规则一：开始工作前，从master分支创建feature分支。</strong></p>
+<p>AoneFlow的feature分支基本借鉴GitFlow，每当开始一项新的工作时，从master分支衍生出一条feature分支（通常以<code>feature/</code>前缀命名），然后在这个分支上提交代码修改。每个工作项对应一个feature分支，所有的修改都不允许直接提交到master分支。</p>
+<ul>
+<li>master分支长期存在（项目的整个生命周期），由项目主要负责人管理。</li>
+<li>feature分支作为临时分支，用于开发的具体功能特性或修复bug，在功能完成后删除。</li>
+</ul>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bVbgRBo.png" srcset="/img/loading.gif" lazyload alt="AoneFlow1"></p>
+<p><strong>规则二：通过合并feature分支，形成release分支。</strong></p>
+<p>从master分支上衍生出一条release分支（通常以<code>release/</code>前缀命名），将所有本次要集成或发布的feature分支依次合并过去。</p>
+<ul>
+<li>GitFlow：feature -&gt; develop -&gt; release</li>
+<li>TrunkBased：master -&gt; release</li>
+</ul>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bVbgRBD.png" srcset="/img/loading.gif" lazyload alt="AoneFlow2"></p>
+<p>release分支的用途可以很灵活，通常将每条release分支与具体的环境相对应，比如release/test对应测试环境，release/prod对应线上正式环境等等。</p>
+<ul>
+<li>release分支既可以为长期分支也可以为短期分支（存在于一个或者多个版本之间），由测试负责人管理。</li>
+</ul>
+<p><strong>规则三：发布到线上正式环境后，合并相应的release分支到master分支，在master分支上添加标签，同时删除该release分支关联的feature分支。</strong></p>
+<p>当一条release分支完成线上正式环境的部署后，为了避免在代码仓库里堆积大量feature分支，还应该清理掉已经上线部分的feature分支。与GitFlow相似，master分支上的最新版本始终与线上版本一致，如果要回溯历史版本，只需在master分支上找到相应的版本标签即可。</p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/bVbgRBI.png" srcset="/img/loading.gif" lazyload alt="AoneFlow3"></p>
+<p><strong>其他：</strong>对于hotfix，可以创建一条新的release分支，对应线上环境。</p>
+<h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs arduino">开发人员A从Master拉取代码生成feature_20210101_A_login<br>开发人员B从Master拉取代码生成feature_20210101_B_register<br><br>测试负责人Y从Master拉取release/test<br>开发人员A提交Pull Request PR1<br>开发人员B提交Pull Request PR2<br><br>开发负责人F和开发人员C评审PR1 PR2，评审通过<br><br>测试负责人Y合并代码到release/test（如果遇到合并冲突，由开发人员处理）<br>测试人员X对release/test中的代码进行测试<br>完成测试后对比Master是否比release/test时有更新，如果没有则直接使用release/test构建上线申请<br>否则从最新Master拉取分支release/prod，合并相关PR并进行回归测试<br></code></pre></td></tr></table></figure>
+
+<h4 id="优点-4"><a href="#优点-4" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>每个功能都创建一个独立的分支，易于持续集成环境。</li>
+<li>release分支的feature组成是动态的，易于调整需求或增删功能。</li>
+<li>release分支之间是松耦合的，可以有多个集成环境分别进行不同的feature组合的集成测试。</li>
+</ol>
+<h3 id="Forking-Workflow"><a href="#Forking-Workflow" class="headerlink" title="Forking Workflow"></a>Forking Workflow</h3><p>Forking Workflow与以上讨论的工作流程不同，它不是多个开发者共享一个远程仓库，而是每个开发者都拥有一个独立的服务端存储库。也就是说每个contributor都有两个仓库：本地私有的仓库和远程共享的仓库。</p>
+<p>Forking Workflow这种工作流主要好处就是每个开发者都拥有自己的远程仓库，可以将提交的commits推送到自己的远程仓库，但只有工程维护者才有权限push提交的commits到官方仓库，其他开发者在没有授权的情况下不能push。Github很多开源项目都是采用Forking Workflow工作流。</p>
+<p><img src="/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/166109-9819c933dc5873fb.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="工作模式-5"><a href="#工作模式-5" class="headerlink" title="工作模式"></a>工作模式</h4><ol>
+<li>项目创建者在服务器上有一个官方的存储仓库。</li>
+<li>开发者fork官方仓库来创建它的拷贝，然后存放在自己的服务器上。</li>
+<li>当开发者准备好发布本地的commit时，他们push commit到他们自己的公共仓库。</li>
+<li>在自己的公共仓库发送一个pull request到官方仓库。</li>
+<li>维护者pull贡献者的commit到他自己的本地仓库。</li>
+<li>审查代码确保它不会破坏工程，合并它到本地仓库的master分支。</li>
+<li>push master分支到服务器上的官方仓库。</li>
+<li>其他开发者应同步官方仓库。</li>
+</ol>
+<h4 id="优点-5"><a href="#优点-5" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>便于多人协作和独立开发。</li>
+<li>是开源项目的理想工作流程。</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://progit.bootcss.com/">Pro Git（第二版）</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.worldhello.net/got/img/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/index.html">Git 权威指南</a></li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</a>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/%E9%80%9A%E7%94%A8%E6%8A%80%E6%9C%AF/">通用技术</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%B7%A5%E5%85%B7/">工具</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Git/">Git</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/post/%E8%AF%A6%E8%A7%A3Python3%E5%8D%8F%E7%A8%8B/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">详解 Python3 协程</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/post/Python%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/">
+                        <span class="hidden-mobile">Python 正则表达式</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <span>Powered by</span> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <span>×</span> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量: 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数: 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
