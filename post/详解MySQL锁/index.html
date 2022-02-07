@@ -1,0 +1,604 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/global/favicon.ico">
+  <link rel="icon" href="/img/global/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="eW1z4rd">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="数据库锁设计的初衷是处理并发问题。作为多用户共享的资源，当出现并发访问的时候，数据库需要合理地控制资源的访问规则，而锁就是用来实现这些访问规则的重要数据结构。以 InnoDB 引擎为例，根据加锁的范围，MySQL 里面的锁可以分为行级锁、表级锁、全局锁三类。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="详解 MySQL 锁">
+<meta property="og:url" content="https://ew1z4rd.github.io/post/%E8%AF%A6%E8%A7%A3MySQL%E9%94%81/index.html">
+<meta property="og:site_name" content="栖丘">
+<meta property="og:description" content="数据库锁设计的初衷是处理并发问题。作为多用户共享的资源，当出现并发访问的时候，数据库需要合理地控制资源的访问规则，而锁就是用来实现这些访问规则的重要数据结构。以 InnoDB 引擎为例，根据加锁的范围，MySQL 里面的锁可以分为行级锁、表级锁、全局锁三类。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-01-19T07:12:33.000Z">
+<meta property="article:modified_time" content="2022-02-07T13:16:42.676Z">
+<meta property="article:author" content="eW1z4rd">
+<meta property="article:tag" content="锁机制">
+<meta property="article:tag" content="高并发">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="InnoDB">
+<meta property="article:tag" content="并发优化">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  <title>详解 MySQL 锁 - 栖丘</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"ew1z4rd.github.io","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"f307ed711fcf86fe5ceb149239b6cfc3","google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>eW1z4rd&#39;s space</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/global/post-bg.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="详解 MySQL 锁">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-19 15:12" pubdate>
+        2022年1月19日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      15 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">详解 MySQL 锁</h1>
+            
+            <div class="markdown-body">
+              <p>数据库锁设计的初衷是 <strong>处理并发问题</strong>。作为多用户共享的资源，当出现并发访问的时候，数据库需要合理地控制资源的访问规则，而锁就是用来实现这些访问规则的重要数据结构。</p>
+<p>以 InnoDB 引擎为例，根据加锁的范围，MySQL 里面的锁可以分为 <strong>行级锁、表级锁、全局锁</strong> 三类。</p>
+<h2 id="行级锁"><a href="#行级锁" class="headerlink" title="行级锁"></a>行级锁</h2><p>行级锁是 MySQL 中锁定粒度 <strong>最细</strong> 的一种锁，表示只针对当前操作的数据行进行加锁。行级锁是 InnoDB 引擎的特性之一，能大大减少数据库操作的冲突，并发度最高；但加锁的开销也最大，<strong>可能会出现死锁</strong>。</p>
+<p>在 InnoDB 中支持三种行锁定方式：</p>
+<ul>
+<li><strong>行锁（Record Lock）</strong>：锁定一个或多个行记录，分为共享锁和排他锁。</li>
+<li><strong>间隙锁（Gap Lock）</strong>：锁定行记录的间隙，即锁定一个范围，但不包括记录本身。</li>
+<li><strong>Next-Key Lock</strong>：行锁和间隙锁合称为 Next-Key Lock，可以锁定一个范围，并且包括记录本身（前开后闭区间）。</li>
+</ul>
+<p><strong>注意：InnoDB 行锁是通过给索引上的索引项加锁来实现的，这意味着只有通过索引检索数据时，才可以使用行锁，否则将使用表锁。</strong></p>
+<h3 id="共享锁"><a href="#共享锁" class="headerlink" title="共享锁"></a>共享锁</h3><p>**共享锁（Shared Lock，S)**，又称为 <strong>读锁</strong>，可以在事务间互相共享，多个用户可以同时读取同一个资源（但无法修改），而不会造成阻塞。若事务 T 对数据对象 A 加上 S 锁，则事务 T <strong>可以读取 A 但不能修改 A</strong>（若此时 A 上没有其他 S 锁，则 T 可以修改 A，但不推荐这样做），其他事务只能再对 A 加 S 锁，而不能加 X 锁，直到 T 释放 A 上的 S 锁。这保证了其他事务可以访问 A，但在 T 释放 A 上的 S 锁之前不能对 A 做任何修改。</p>
+<p>语法：<code>select ... lock in share mode</code></p>
+<h3 id="排他锁"><a href="#排他锁" class="headerlink" title="排他锁"></a>排他锁</h3><p><strong>排他锁（Exclusive Lock，X）</strong>，又称为 <strong>写锁</strong>，会排斥其他所有获取锁的请求（S 锁和 X 锁），一直阻塞，直到事务操作完成。若事务 T 对数据对象 A 加上 X 锁，则事务 T <strong>可以读取 A 也可以修改 A</strong>，其他事务不能再对 A 加任何锁（可以同时读取 A 但不能修改），直到 T 释放 A 上的 X 锁。</p>
+<p>语法：<code>select ... for update</code></p>
+<p>注意：在 MySQL InnoDB 引擎下，<strong>每个 DML 语句都会自动给涉及到的数据加上排他锁，DQL 语句不会加任何类型的锁。</strong>所以加排他锁的数据行在其他事务中不能被修改，也不能通过 <code>lock in share mode</code> 和 <code>for update</code> 的方式查询数据，但可以直接通过 <code>select … from …</code> 进行查询。</p>
+<blockquote>
+<p>使用 DML 语句时发生的锁定也被称为 “隐式锁定”，而通过 “共享锁”、“排他锁” 等方式导致的锁定被称为 “显式锁定”。</p>
+</blockquote>
+<h3 id="间隙锁"><a href="#间隙锁" class="headerlink" title="间隙锁"></a>间隙锁</h3><p>我们知道，产生幻读的原因是行锁只能锁住行，但是插入新记录这个动作，要更新的是记录之间的 “间隙”。因此，为了解决幻读问题，InnoDB 只好引入新的锁，也就是 <strong>间隙锁（Gap Lock）</strong>。</p>
+<p>默认情况下，InnoDB 工作在 RR 隔离级别下，会以 Next-Key Lock 的方式对数据行进行加锁。Next-Key Lock 是行锁和间隙锁的组合，即当 InnoDB 扫描索引记录的时候，会首先对索引记录加上行锁，再对索引记录的间隙加上间隙锁。这样其他事务既不能修改这个记录，也不能在这个间隙插入记录，可以有效防止幻读的发生。</p>
+<p>例如，执行一条范围条件检索的 SQL 语句：<code>select * from blog where id &gt; 100 for update</code>。此时，InnoDB 不仅会对符合条件 <em>id &gt; 100</em> 的记录加锁，还会对符合 <em>id &gt; 100</em> 但并不存在记录的行加锁。</p>
+<h2 id="表级锁"><a href="#表级锁" class="headerlink" title="表级锁"></a>表级锁</h2><p>表级锁是 MySQL 中锁定粒度 <strong>较大</strong> 的一种锁，表示对当前操作的整张表加锁。表级锁的实现简单，资源消耗较少，不会出现死锁，被大部分 MySQL 引擎支持，如最常用的 MyISAM 和 InnoDB；但加锁的范围比较大，发生冲突的概率高，从而导致并发度较低。</p>
+<p>MySQL 里面表级别的锁有两种，一种是表锁，一种是元数据锁，在 InnoDB 下还有另一种表级锁为意向锁。</p>
+<h3 id="表锁"><a href="#表锁" class="headerlink" title="表锁"></a>表锁</h3><p>表锁有两种模式，分为 <strong>表共享读锁（Table Read Lock）</strong>和 <strong>表独占写锁（Table Write Lock）</strong>，并提供了与之对应的锁定表和解锁表的语法功能：</p>
+<ul>
+<li>锁定表：<code>lock tables ... read/write</code>，为当前会话锁定表（申请一个表级别的元数据锁）；</li>
+<li>解锁表：<code>unlock tables</code>，释放被当前会话持有的任何锁。</li>
+</ul>
+<h3 id="元数据锁"><a href="#元数据锁" class="headerlink" title="元数据锁"></a>元数据锁</h3><p>元数据就是表的基础信息，<strong>元数据锁（Metadata Lock，MDL）</strong>的主要作用是在并发访问时维护表元数据的一致性，在表上有活动事务的时候，不可以对元数据进行修改操作。</p>
+<p>元数据锁是在 MySQL Server 层实现的表级锁，<strong>不需要显式使用</strong>。每执行一条 DML、DDL 语句时都会申请 MDL 锁，这个加锁过程由系统自动控制，无法直接干预。在执行 DML 操作时会自动加读锁，在执行 DDL 操作时自动加写锁，读读共享、读写互斥、写写互斥，同时写锁获取的优先级要高于读锁。</p>
+<p>一旦出现写锁等待，不仅会阻塞当前操作，同时还会阻塞后续该表的所有操作。事务一旦申请到 MDL 锁后，直到事务执行结束才会将锁释放。特殊情况是，如果事务中包含 DDL 操作，MySQL 会在 DDL 操作语句执行前 <strong>进行隐式提交</strong>，以保证该条语句作为一个单独的事务存在，同时也保证写锁的释放。</p>
+<blockquote>
+<p>当事务等待元数据锁时，执行 <code>show processlist</code>，可以看到 “Waiting for table metadata lock” 字样。</p>
+</blockquote>
+<p>当出现元数据锁导致多个会话发生阻塞不可用时，通常用 <code>kill thread_id</code> 的方式来结束掉 MySQL 的客户端连接，如 <code>kill 23</code>。</p>
+<h3 id="意向锁"><a href="#意向锁" class="headerlink" title="意向锁"></a>意向锁</h3><p>为了允许行锁和表锁共存，实现多粒度锁机制，InnoDB 还有两种内部使用的 <strong>意向锁（Intention Lock）</strong>：</p>
+<ul>
+<li>意向共享锁（IS）：表示事务准备给数据行加共享锁，事务在给一个数据行加共享锁前必须先取得该表的 IS 锁。</li>
+<li>意向排他锁（IX）：表示事务准备给数据行加排他锁，事务在给一个数据行加排他锁前必须先取得该表的 IX 锁。</li>
+</ul>
+<p>这两种意向锁都是表级锁，是 InnoDB 自动添加的，<strong>不需要用户干预</strong>。如果一个事务请求的锁模式与当前的锁兼容，InnoDB 就把请求的锁授予该事务；反之，如果两者不兼容，该事务就要进行阻塞，直到锁释放。</p>
+<p>InnoDB 意向锁、共享锁、排他锁兼容性如下：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>X</th>
+<th>IX</th>
+<th>S</th>
+<th>IS</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>X</strong></td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td><strong>IX</strong></td>
+<td>冲突</td>
+<td>兼容</td>
+<td>冲突</td>
+<td>兼容</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>冲突</td>
+<td>冲突</td>
+<td>兼容</td>
+<td>兼容</td>
+</tr>
+<tr>
+<td><strong>IS</strong></td>
+<td>冲突</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>兼容</td>
+</tr>
+</tbody></table>
+<h2 id="全局锁"><a href="#全局锁" class="headerlink" title="全局锁"></a>全局锁</h2><p>全局锁是 MySQL 中锁定粒度 <strong>最大</strong> 的一种锁，会对整个 MySQL 实例加锁，加锁之后数据库整体处于 <strong>只读状态</strong>，阻止所有 DML、DDL 操作，<strong>典型使用场景是进行全库逻辑备份</strong>。命令如下：</p>
+<ul>
+<li>锁定表：<code>flush tables with read lock</code></li>
+<li>解锁表：<code>unlock tables</code></li>
+</ul>
+<h2 id="乐观锁与悲观锁"><a href="#乐观锁与悲观锁" class="headerlink" title="乐观锁与悲观锁"></a>乐观锁与悲观锁</h2><p>乐观锁和悲观锁是 <strong>人为定义的概念</strong> ，可以理解为是处理并发资源的一种思想和常用手段，用于解决 <strong>第二类丢失更新问题</strong>，不要把它们与 MySQL 中提供的锁机制（表锁、行锁、共享锁、排他锁等）混为一谈。</p>
+<h3 id="乐观锁"><a href="#乐观锁" class="headerlink" title="乐观锁"></a>乐观锁</h3><p><strong>乐观锁（Optimistic Lock）</strong>，顾名思义就是很乐观，每次操作时都假设事务不会发生并发冲突（丢失更新），所以不会上锁。但在提交更新时会检查是否存在冲突，并且由应用程序处理。好处是不存在死锁的情况，<strong>适用于读多写少的应用场景</strong>。如果经常发生冲突，上层应用不断让用户进行重试操作，反而会降低性能，这种情况下悲观锁就比较适用。</p>
+<p>一般来说，乐观锁是基于版本号实现的，具体又可以分为以下两种：</p>
+<ul>
+<li><p>使用数据版本机制（Version）：在数据表中增加一个数字类型的 <code>version</code> 字段，数据每更新一次，将对应的记录的 <code>version</code> 值加 <code>1</code>。在查询记录时，同时获取 <code>version</code> 字段值，在提交更新时，判断此刻的 <code>version</code> 值是否与之前查询出来的 <code>version</code> 的值相等。如果相同则予以更新，否则认为是过期数据，需要重试。例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></div></td><td class="code"><pre><code class="hljs mysql">select tokens, version from bucket where id=1;  # version=1<br>update bucket set tokens=new_tokens,version=version+1 where id=1 and version=1;  # new_tokens由程序计算得到<br></code></pre></td></tr></table></figure></li>
+<li><p>使用时间戳机制（Timestamp）：和上面的处理逻辑类似，在表中新增一个时间戳类型字段。在提交更新时，检查当前数据库中的时间戳和自己更新前取到的时间戳是否相同，如果相同则予以更新，否则需要重试。</p>
+</li>
+</ul>
+<p><strong>注意：乐观锁的更新操作，最好用主键或者唯一索引来更新，这样是行锁，否则更新时会使用表锁。</strong></p>
+<h3 id="悲观锁"><a href="#悲观锁" class="headerlink" title="悲观锁"></a>悲观锁</h3><p><strong>悲观锁（Pessimistic Lock）</strong>，顾名思义就是很悲观，每次操作时都假设事务会发生并发冲突，所以每次在拿数据时都会上锁，屏蔽一切可能违反数据完整性的操作。悲观锁的实现，通常依靠数据库提供的锁机制实现，比如 InnoDB 中的 <strong>排他锁</strong> 和 <strong>共享锁</strong> 都属于悲观锁的范畴。</p>
+<h2 id="并发优化"><a href="#并发优化" class="headerlink" title="并发优化"></a>并发优化</h2><p>在了解 InnoDB 锁特性后，我们可以通过设计来减少并发场景下的锁冲突和死锁，优化方式包括：</p>
+<ol>
+<li>尽量使用较低的事务隔离级别，不要申请超过实际需要的锁级别；</li>
+<li>选择合理的事务大小，小事务发生锁冲突的几率也更小；</li>
+<li>除非必须，查询时不要显示加锁；</li>
+<li>如果事务中需要锁定多个行，把最可能造成锁冲突、最可能影响并发度的锁往后放；</li>
+<li>不同程序并发存取多个表时，尽量约定以相同的顺序访问各表，对一个表而言，尽可能以固定的顺序存取表中的行；</li>
+<li>精心设计索引，尽量使用索引访问数据；</li>
+<li>尽量用索引上的等值查询访问数据，避免间隙锁对并发插入的影响；</li>
+<li>对于非常容易产生死锁的业务部分，可以通过表锁来减少死锁的可能。</li>
+</ol>
+<p>当程序还是无可避免的进入死锁状态后，有两种策略：</p>
+<ul>
+<li>一种是直接进入等待，直到 <strong>超时</strong>。这个超时时间可以通过参数 <code>innodb_lock_wait_timeout</code> 来设置；</li>
+<li>另一种是 <strong>发起死锁检测</strong>，发现死锁后，主动回滚死锁链条中的某一个事务，让其他事务得以继续执行。将参数 <code>innodb_deadlock_detect</code> 设置为 on，表示开启这个逻辑。</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</a>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/MySQL/">MySQL</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E9%94%81%E6%9C%BA%E5%88%B6/">锁机制</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a>
+                    
+                      <a class="hover-with-bg" href="/tags/MySQL/">MySQL</a>
+                    
+                      <a class="hover-with-bg" href="/tags/InnoDB/">InnoDB</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96/">并发优化</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/post/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE%EF%BC%88%E5%9B%9B%EF%BC%89/">
+                        <span class="hidden-mobile">透视 HTTP 协议（四）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <span>Powered by</span> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <span>×</span> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量: 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数: 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

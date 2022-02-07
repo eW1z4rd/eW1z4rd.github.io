@@ -1,0 +1,538 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/global/favicon.ico">
+  <link rel="icon" href="/img/global/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="eW1z4rd">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本文介绍了 Python 多线程中使用到的各种锁机制，如 GIL、Mutex、Semaphore，并通过代码示例进行说明。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅析 Python 中各种锁机制">
+<meta property="og:url" content="https://ew1z4rd.github.io/post/%E6%B5%85%E6%9E%90Python%E4%B8%AD%E5%90%84%E7%A7%8D%E9%94%81%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="栖丘">
+<meta property="og:description" content="本文介绍了 Python 多线程中使用到的各种锁机制，如 GIL、Mutex、Semaphore，并通过代码示例进行说明。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/Python/2-1ZS012105L23.gif">
+<meta property="article:published_time" content="2020-10-02T09:45:32.000Z">
+<meta property="article:modified_time" content="2022-02-07T13:00:22.017Z">
+<meta property="article:author" content="eW1z4rd">
+<meta property="article:tag" content="Python3">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="GIL">
+<meta property="article:tag" content="锁机制">
+<meta property="article:tag" content="高并发">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ew1z4rd.github.io/img/Python/2-1ZS012105L23.gif">
+  
+  
+  <title>浅析 Python 中各种锁机制 - 栖丘</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"ew1z4rd.github.io","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"f307ed711fcf86fe5ceb149239b6cfc3","google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>eW1z4rd&#39;s space</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/global/post-bg.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="浅析 Python 中各种锁机制">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-10-02 17:45" pubdate>
+        2020年10月2日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.4k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      13 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">浅析 Python 中各种锁机制</h1>
+            
+            <div class="markdown-body">
+              <h2 id="并发和并行"><a href="#并发和并行" class="headerlink" title="并发和并行"></a>并发和并行</h2><ul>
+<li>并发（Concurrency）：拥有交替处理多个任务的能力，但不是同时。通常适用于 I/O 密集型任务。</li>
+<li>并行（Parallelism）：拥有同时处理多个任务的能力。通常适用于 CPU 密集型任务。</li>
+</ul>
+<h2 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h2><h3 id="GIL（全局解释器锁）"><a href="#GIL（全局解释器锁）" class="headerlink" title="GIL（全局解释器锁）"></a>GIL（全局解释器锁）</h3><p>GIL（Global Interpreter Lock）全局解释器锁，是最流行的 Python 解释器 <strong>CPython</strong>（官方解释器）中引入的一个概念，它使得同一个进程下任何时刻 <strong>仅有一个线程在执行</strong>，无法利用多核优势。由于GIL的存在，导致Python多线程性能甚至比单线程更糟。</p>
+<p>在 Cpython 中，每一个线程在开始执行时，都会获得 GIL 阻止别的线程执行，在线程遇到 I/O 等会引起阻塞状态的操作时，会释放 GIL 以允许其他线程开始利用资源。同时，CPython 中还有一个 <strong>间隔检查（check interval）</strong> 机制，即 CPython 解释器会轮询检查线程 GIL 锁的获得情况，每隔一段时间就会强制当前线程释放 GIL，使别的线程能有执行的机会。这样一来，用户看到的就是“伪”并行，即 Python 线程在交替执行，但并没有真正的并行。</p>
+<p>线程抢占 GIL 的调度流程，如下图所示：</p>
+<p><img src="/img/Python/2-1ZS012105L23.gif" srcset="/img/loading.gif" lazyload alt="GIL 工作流程示意图"></p>
+<p><strong>引入 GIL 的原因</strong></p>
+<ol>
+<li>设计者为了规避类似于内存管理这样复杂的条件竞争问题。</li>
+<li>CPython 使用了大量 C 语言库，但大部分 C 语言库都不是原生线程安全的。</li>
+</ol>
+<blockquote>
+<p>注：<strong>Python GIL 不能绝对保证线程安全</strong>，因为即便 GIL 仅允许一个 Python 线程执行，但 CPython 还有 check interval 这样的抢占机制。即 GIL 的设计，主要是为了方便 CPython 解释器层的编写者，而不是为了 Python 应用层的软件工程师。</p>
+</blockquote>
+<p><strong>如何绕过 GIL</strong></p>
+<ol>
+<li>绕过 CPython，使用 JPython 等其他解释器。</li>
+<li>把关键的性能代码，用 C 语言来实现。</li>
+<li>多核 CPU 可使用多进程并行的方式，替代多线程并发。</li>
+</ol>
+<p><strong>示例：多线程访问同一变量（未加锁）</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></div></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> threading<br><span class="hljs-keyword">import</span> time<br><br>total = <span class="hljs-number">10</span><br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sale</span>():</span><br>    <span class="hljs-keyword">global</span> total<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;售出第%s张票...&#x27;</span> % (<span class="hljs-number">10</span> - total + <span class="hljs-number">1</span>))<br>    <span class="hljs-comment"># time.sleep(0.001)  # 等待io操作</span><br>    total -= <span class="hljs-number">1</span><br>    <span class="hljs-comment"># time.sleep(0.001)</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;剩余%s张票\n&#x27;</span> % total)<br><br><br>threads = []<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>    t = threading.Thread(target=sale, args=())<br>    threads.append(t)<br><span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> threads:<br>    t.start()<br><span class="hljs-comment"># cpu密集型（注释掉io操作）：结果符合预期（线程start前total-=1已经计算完成）</span><br><span class="hljs-comment"># io密集型：结果异常</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="互斥锁（同步锁）"><a href="#互斥锁（同步锁）" class="headerlink" title="互斥锁（同步锁）"></a>互斥锁（同步锁）</h3><p>互斥锁（Mutex），保证同一时间只能有一个线程修改共享数据，解决了上述io密集型场景产生的计算错误问题。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> threading<br><span class="hljs-keyword">import</span> time<br><br>total = <span class="hljs-number">10</span><br>lock = threading.Lock()<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sale</span>():</span><br>    <span class="hljs-keyword">global</span> total<br>    lock.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;正在售出第%s张票...&#x27;</span> % (<span class="hljs-number">10</span> - total + <span class="hljs-number">1</span>))<br>    time.sleep(<span class="hljs-number">0.001</span>)  <span class="hljs-comment"># 等待io操作</span><br>    total -= <span class="hljs-number">1</span><br>    time.sleep(<span class="hljs-number">0.001</span>)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;剩余%s张票\n&#x27;</span> % total)<br>    lock.release()<br><br><br>threads = []<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>    t = threading.Thread(target=sale, args=())<br>    threads.append(t)<br><span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> threads:<br>    t.start()<br></code></pre></td></tr></table></figure>
+
+<h3 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h3><p>由于保护不同的数据应该使用不同的互斥锁，当有多个互斥锁存在的时候，就可能会导致死锁。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 发生死锁的情况</span><br><span class="hljs-keyword">import</span> threading<br><span class="hljs-keyword">import</span> time<br><br>lockA = threading.Lock()<br>lockB = threading.Lock()<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span>():</span><br>    lockA.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo acquire lockA&#x27;</span>)<br>    lockB.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo acquire lockB&#x27;</span>)<br>    lockA.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo release lockA&#x27;</span>)<br>    lockB.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo release lockB&#x27;</span>)<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bar</span>():</span><br>    lockB.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar acquire lockB&#x27;</span>)<br>    time.sleep(<span class="hljs-number">1</span>)  <span class="hljs-comment"># 等待io操作</span><br>    lockA.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar acquire lockA&#x27;</span>)<br>    lockB.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar release lockB&#x27;</span>)<br>    lockA.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar release lockA&#x27;</span>)<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span>():</span><br>    foo()<br>    bar()<br><br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">5</span>):<br>    t = threading.Thread(target=run, args=())<br>    t.start()<br></code></pre></td></tr></table></figure>
+
+<h3 id="递归锁（可重入锁）"><a href="#递归锁（可重入锁）" class="headerlink" title="递归锁（可重入锁）"></a>递归锁（可重入锁）</h3><p>递归锁（Recursive Mutex）可以被获取多次，并且只能被所有者释放，用于解决多个互斥锁死锁情况。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> threading<br><span class="hljs-keyword">import</span> time<br><br>rlock = threading.RLock()<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span>():</span><br>    rlock.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo acquire lock-1&#x27;</span>)<br>    rlock.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo acquire lock-2&#x27;</span>)<br>    rlock.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo release lock-2&#x27;</span>)<br>    rlock.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func foo release lock-1&#x27;</span>)<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bar</span>():</span><br>    rlock.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar acquire lock-1&#x27;</span>)<br>    time.sleep(<span class="hljs-number">1</span>)  <span class="hljs-comment"># 等待io操作</span><br>    rlock.acquire()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar acquire lock-2&#x27;</span>)<br>    rlock.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar release lock-2&#x27;</span>)<br>    rlock.release()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;func bar release lock-1&#x27;</span>)<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span>():</span><br>    foo()<br>    bar()<br><br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">5</span>):<br>    t = threading.Thread(target=run, args=())<br>    t.start()<br></code></pre></td></tr></table></figure>
+
+<h3 id="信号量"><a href="#信号量" class="headerlink" title="信号量"></a>信号量</h3><p>信号量（Semaphore），用于多线程同步，限制线程的并发量。</p>
+<blockquote>
+<p>mutex是semaphore的一种特殊情况（n=1时）</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> threading<br><span class="hljs-keyword">import</span> time<br><br>sem = threading.Semaphore(<span class="hljs-number">5</span>)  <span class="hljs-comment"># 每2秒打印5次线程名称</span><br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span>():</span><br>    sem.acquire()<br>    time.sleep(<span class="hljs-number">2</span>)<br>    <span class="hljs-built_in">print</span>(threading.current_thread().name)<br>    sem.release()<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bar</span>():</span><br>    <span class="hljs-keyword">with</span> sem:  <span class="hljs-comment"># 使用with语句</span><br>        time.sleep(<span class="hljs-number">2</span>)<br>        <span class="hljs-built_in">print</span>(threading.current_thread().name)<br><br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>    t = threading.Thread(target=foo, args=[])<br>    t.start()<br></code></pre></td></tr></table></figure>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</a>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/Python/">Python</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python3/">Python3</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+                    
+                      <a class="hover-with-bg" href="/tags/GIL/">GIL</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E9%94%81%E6%9C%BA%E5%88%B6/">锁机制</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/post/Git%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Git 使用指南</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/post/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/">
+                        <span class="hidden-mobile">正则表达式</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <span>Powered by</span> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <span>×</span> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量: 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数: 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

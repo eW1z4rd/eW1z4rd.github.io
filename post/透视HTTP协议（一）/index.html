@@ -1,0 +1,636 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/global/favicon.ico">
+  <link rel="icon" href="/img/global/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="eW1z4rd">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="HTTP 协议的请求报文和响应报文的结构基本相同，由三大部分组成：起始行（start line）、头部字段集合（header）、消息正文（entity）。其中前两部分经常被合称为 header，消息正文被称为 body。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="透视 HTTP 协议（一）">
+<meta property="og:url" content="https://ew1z4rd.github.io/post/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%80%EF%BC%89/index.html">
+<meta property="og:site_name" content="栖丘">
+<meta property="og:description" content="HTTP 协议的请求报文和响应报文的结构基本相同，由三大部分组成：起始行（start line）、头部字段集合（header）、消息正文（entity）。其中前两部分经常被合称为 header，消息正文被称为 body。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/62e061618977565c22c2cf09930e1d3c.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/36108959084392065f36dff3e12967b9.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/a1477b903cd4d5a69686683c0dbc3300.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/1fe4c1121c50abcf571cebd677a8bdea.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/cb0d1d2c56400fe9c9988ee32842b175.png">
+<meta property="og:image" content="https://ew1z4rd.github.io/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/3cdc8ac71b80929f4a94dfeb9ffe4b6d.jpg">
+<meta property="article:published_time" content="2021-09-21T08:02:11.000Z">
+<meta property="article:modified_time" content="2022-02-07T13:40:11.188Z">
+<meta property="article:author" content="eW1z4rd">
+<meta property="article:tag" content="HTTP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ew1z4rd.github.io/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/62e061618977565c22c2cf09930e1d3c.png">
+  
+  
+  <title>透视 HTTP 协议（一） - 栖丘</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"ew1z4rd.github.io","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"f307ed711fcf86fe5ceb149239b6cfc3","google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>eW1z4rd&#39;s space</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/global/post-bg.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="透视 HTTP 协议（一）">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-21 16:02" pubdate>
+        2021年9月21日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      5.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      20 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">透视 HTTP 协议（一）</h1>
+            
+            <div class="markdown-body">
+              <h2 id="报文结构"><a href="#报文结构" class="headerlink" title="报文结构"></a>报文结构</h2><p>HTTP 协议的请求报文和响应报文的结构基本相同，由三大部分组成：</p>
+<ol>
+<li>起始行（start line）：描述请求或响应的基本信息；</li>
+<li>头部字段集合（header）：使用 key-value 形式更详细地说明报文，是由 ASCII 编码的 <strong>纯文本</strong> 数据；</li>
+<li>消息正文（entity）：实际传输的数据，它不一定是纯文本，可以是图片、视频等二进制数据。</li>
+</ol>
+<p>其中前两部分经常被合称为 <strong>header</strong>，消息正文被称为 <strong>body</strong>。</p>
+<p>HTTP 协议规定报文必须有 header，但可以没有 body，而且在 header 之后必须要有一个 <strong>空行</strong>，也就是 <code>CRLF</code>（十六进制 0x0D0A）。所以，一个完整的 HTTP 报文就是下图的这个样子：</p>
+<p><img src="/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/62e061618977565c22c2cf09930e1d3c.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="请求行"><a href="#请求行" class="headerlink" title="请求行"></a>请求行</h2><p><strong>请求行（request line）</strong>简要地描述了 <strong>客户端想要如何操作服务器端的资源</strong>，它由三部分构成：</p>
+<ol>
+<li>请求方法：是一个动词，如 GET/POST，表示对资源的操作；</li>
+<li>请求目标：通常是一个 URI，标记了请求方法要操作的资源；</li>
+<li>版本号：表示报文使用的 HTTP 协议版本。</li>
+</ol>
+<p>这三个部分通常使用空格（space）分隔，最后用 CRLF 换行表示结束。</p>
+<p><img src="/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/36108959084392065f36dff3e12967b9.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="状态行"><a href="#状态行" class="headerlink" title="状态行"></a>状态行</h2><p><strong>状态行（status line）</strong>描述了 <strong>服务器响应的状态</strong>，它由三部分构成：</p>
+<ol>
+<li>版本号：表示报文使用的 HTTP 协议版本；</li>
+<li>状态码：一个三位数，用代码的形式表示服务器处理的结果；</li>
+<li>原因：作为数字状态码补充，是更详细的解释文字，帮助理解原因。</li>
+</ol>
+<p><img src="/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/a1477b903cd4d5a69686683c0dbc3300.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="头部字段"><a href="#头部字段" class="headerlink" title="头部字段"></a>头部字段</h2><p>请求行或状态行再加上头部字段集合就构成了 HTTP 报文里完整的 <strong>请求头</strong> 或 <strong>响应头</strong>，除了起始行不同，请求头和响应头的结构是基本一样的。</p>
+<p><img src="/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/1fe4c1121c50abcf571cebd677a8bdea.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/cb0d1d2c56400fe9c9988ee32842b175.png" srcset="/img/loading.gif" lazyload></p>
+<p>头部字段是 <code>key-value</code> 的形式，key 和 value 之间用 <code>:</code> 分隔，最后用 <code>CRLF</code> 换行表示字段结束。比如在 Host: 127.0.0.1 这一行里，key 就是 Host，value 就是 127.0.0.1。</p>
+<p>使用头字段需要注意下面几点：</p>
+<ol>
+<li>字段名 <strong>不区分大小写</strong>，例如 Host 也可以写成 host，但首字母大写的可读性更好；</li>
+<li>字段名 <strong>不允许出现空格</strong>，可以使用连字符 <code>-</code>，但不能使用下划线 <code>_</code>；</li>
+<li>字段名后面必须紧接着 <code>:</code> 不能有空格，字段值前可以有多个空格；</li>
+<li>字段的顺序不影响语义，可以任意排列；</li>
+<li>字段原则上 <strong>不能重复</strong>，除非这个字段本身的语义允许，例如 Set-Cookie。</li>
+</ol>
+<blockquote>
+<p>HTTP 头部字段非常灵活，不仅可以使用标准里的 Host、Connection 等已有头，也可以任意添加自定义头，这就给 HTTP 协议带来了无限的扩展可能。</p>
+<p>虽然 HTTP 协议对 header 的大小没有做限制，但各个 Web 服务器都不允许过大的请求头，因为头部太大可能会占用大量的服务器资源，影响运行效率。</p>
+</blockquote>
+<h2 id="常用头字段"><a href="#常用头字段" class="headerlink" title="常用头字段"></a>常用头字段</h2><p>HTTP 协议规定了非常多的头部字段，以实现各种各样的功能，但基本上可以分为四大类：</p>
+<ol>
+<li>通用字段：在请求头和响应头里都可以出现；</li>
+<li>请求字段：仅能出现在请求头里，补充说明请求信息或者额外的附加条件；</li>
+<li>响应字段：仅能出现在响应头里，补充说明响应报文的信息；</li>
+<li>实体字段：实际上属于通用字段，但专门描述 body 的额外信息。</li>
+</ol>
+<blockquote>
+<p>对 HTTP 报文的解析和处理实际上主要就是对头字段的处理，理解了头字段也就理解了 HTTP 报文。</p>
+</blockquote>
+<h3 id="通用字段"><a href="#通用字段" class="headerlink" title="通用字段"></a>通用字段</h3><ul>
+<li><strong>Date</strong>：表示 HTTP 报文创建的时间，通常出现在响应头里，客户端可以使用这个时间再搭配其他字段决定缓存策略。</li>
+</ul>
+<h3 id="请求字段"><a href="#请求字段" class="headerlink" title="请求字段"></a>请求字段</h3><ul>
+<li><strong>Host</strong>：是 HTTP/1.1 规范里唯一要求 <strong>必须出现</strong> 的字段，用于告诉服务器这个请求应该由哪个主机来处理。当一台计算机上托管了多个虚拟主机的时候，服务器端就需要用 Host 字段来选择，类似简单的“路由重定向”。</li>
+<li><strong>User-Agent</strong>：使用一个字符串来描述发起 HTTP 请求的客户端，服务器可以依据它来返回最合适此浏览器显示的页面。</li>
+<li><strong>Referer</strong>：表示当前请求页面的来源页面的地址（注：referer 实际上是 referrer 的误拼写），服务端一般使用 <code>Referer</code> 请求头识别访问来源，可用于统计分析、日志记录以及缓存优化、防盗链等。与之相关的还有一个 <strong>Referrer Policy</strong>，用于控制 <code>Referer</code> 请求头的内容。</li>
+</ul>
+<h3 id="响应字段"><a href="#响应字段" class="headerlink" title="响应字段"></a>响应字段</h3><ul>
+<li><strong>Server</strong>：告诉客户端当前正在提供 Web 服务的软件名称和版本号，这个字段不是必须出现的。因为会暴露服务器的信息，有可能被黑客利用，所以有的网站响应头中要么没有这个字段，要么就给出一个完全无关的描述信息。</li>
+<li><strong>Location</strong>：表示该网页的跳转地址，一般在 3xx 的重定向响应中使用。</li>
+<li>X-Powered-By：非标准字段，用于告知服务器端使用的编程语言。</li>
+</ul>
+<h2 id="请求方法"><a href="#请求方法" class="headerlink" title="请求方法"></a>请求方法</h2><p><img src="/img/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/3cdc8ac71b80929f4a94dfeb9ffe4b6d.jpg" srcset="/img/loading.gif" lazyload></p>
+<h3 id="标准方法"><a href="#标准方法" class="headerlink" title="标准方法"></a>标准方法</h3><p>目前 HTTP/1.1 规定了八种方法，方法名称必须是 <strong>大写形式</strong>：</p>
+<ol>
+<li>GET：从服务器获取资源；</li>
+<li>HEAD：从服务器获取资源的元信息，即“响应头”，是轻量化的 GET；</li>
+<li>POST：向服务器提交数据，通常表示“新建”；</li>
+<li>PUT：向服务器提交数据，通常表示“修改”，功能类似 POST；</li>
+<li>DELETE：要求服务器删除资源；</li>
+<li>CONNECT：要求服务器为客户端和另一台远程服务器建立一条特殊的连接隧道，这时 Web 服务器在中间充当了代理的角色；</li>
+<li>OPTIONS：要求服务器列出可对资源实行的操作方法，在响应头的 Allow 字段里返回；它的功能很有限，用处也不大，有的服务器（例如 Nginx）干脆就没有实现对它的支持；</li>
+<li>TRACE：多用于对 HTTP 链路的测试或诊断，可以追踪请求 - 响应的传输路径；它的本意是好的，但存在漏洞，会泄漏网站的信息，所以 Web 服务器通常也是禁止使用。</li>
+</ol>
+<h3 id="扩展方法"><a href="#扩展方法" class="headerlink" title="扩展方法"></a>扩展方法</h3><p>虽然 HTTP/1.1 里规定了八种请求方法，但它并没有限制我们只能用这八种方法，这也体现了 HTTP 协议良好的扩展性，我们可以任意添加请求动作，只要请求方和响应方都能理解就行。</p>
+<p>例如在 WebDAV 中就对 HTTP/1.1 进行了扩展，添加了 MKCOL、COPY、MOVE、LOCK、UNLOCK、PATCH 等方法。如果有合适的场景，你也可以把它们应用到自己的系统里，比如用 LOCK 方法锁定资源暂时不允许修改，或者使用 PATCH 方法给资源打个小补丁，部分更新数据。但因为这些方法是非标准的，所以需要为客户端和服务器编写额外的代码才能支持。</p>
+<h2 id="状态码"><a href="#状态码" class="headerlink" title="状态码"></a>状态码</h2><p><strong>状态码（Status Code）</strong> 在响应报文里表示了服务器对请求的处理结果。目前 RFC 标准里规定的状态码由三位十进制数字组成，并分为了五类，用数字的第一位表示类别，0~99 不用。因此，状态码的实际可用范围在 <strong>100~599</strong>。</p>
+<p>这五类状态码的具体含义是：</p>
+<ul>
+<li>1××：<strong>提示信息</strong>，表示目前是协议处理的中间状态，还需要后续的操作，实际用到的场景很少；</li>
+<li>2××：<strong>成功</strong>，表示服务器已经收到并成功处理了客户端的请求报文；</li>
+<li>3××：<strong>重定向</strong>，表示客户端请求的资源位置发生变动，需要客户端重新发送请求获取资源；</li>
+<li>4××：<strong>客户端错误</strong>，表示客户端发送的请求报文有误，服务器无法处理；</li>
+<li>5××：<strong>服务器错误</strong>，表示服务器在处理请求时发生了内部错误，无法返回应有的响应数据。</li>
+</ul>
+<p>在 HTTP 协议中，正确地理解并应用这些状态码不是客户端或服务器单方的责任，而是双方共同的责任。</p>
+<p>目前 RFC 标准里总共有 <strong>41 个</strong> 状态码，但状态码的定义是开放的，<strong>允许自行扩展</strong>。所以 Apache、Nginx 等 Web 服务器都定义了一些专有的状态码。如果你自己开发 Web 应用，也完全可以在不冲突的前提下定义新的代码。</p>
+<h3 id="1××"><a href="#1××" class="headerlink" title="1××"></a>1××</h3><ul>
+<li>101 Switching Protocols：表示客户端使用 Connection: upgrade 字段，要求在 HTTP 协议的基础上改成其他的协议继续通信，比如 WebSocket、HTTP/2，如果服务器也同意变更协议，就会发送状态码 101 切换协议。</li>
+</ul>
+<h3 id="2××"><a href="#2××" class="headerlink" title="2××"></a>2××</h3><ul>
+<li><p><strong>200 OK</strong>：是最常见的成功状态码，表示一切正常，服务器如客户端所期望的那样返回了处理结果。如果是非 HEAD 请求，通常在响应头后都会有 body 数据。</p>
+</li>
+<li><p><strong>204 No Content</strong>：是另一个很常见的成功状态码，它的含义与 200 OK 基本相同，但响应头后没有 body 数据。所以对于 Web 服务器来说，正确地区分 200 和 204 是很有必要的。</p>
+</li>
+<li><p><strong>206 Partial Content</strong>：是 HTTP 分块下载或断点续传的基础，在客户端发送“范围请求”、要求获取资源的部分数据时出现。它与 200 一样，也是服务器成功处理了请求，但 body 里的数据不是资源的全部，而是其中的一部分。</p>
+<blockquote>
+<p>响应码 206 通常会伴随着头字段 <strong>Content-Range</strong>，表示响应报文里 body 数据的具体范围，供客户端确认。例如：Content-Range: bytes 0-99/2000，表示此次获取的是总计 2000 个字节的前 100 个字节。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="3××"><a href="#3××" class="headerlink" title="3××"></a>3××</h3><ul>
+<li><p><strong>301 Moved Permanently</strong>：俗称 <strong>永久重定向</strong>，表示请求的资源已经不存在了，以后的请求都必须改用新的 URI。</p>
+</li>
+<li><p><strong>302 Found / Moved Temporarily</strong>：俗称 <strong>临时重定向</strong>，表示请求的资源还在，但是暂时不可用，需要用另一个 URI 来访问。</p>
+<blockquote>
+<p>301 和 302 都会在响应头里使用 <strong>Location</strong> 字段指明后续要跳转的 URI，可以用绝对或相对的形式，最终的效果很相似，浏览器都会重定向到新的 URI。两者的根本区别在于语义，一个是 “永久”，一个是 “临时”，所以在场景、用法上差距很大。</p>
+<p>比如，你的网站升级到了 HTTPS，原来的 HTTP 不打算用了，这就是 “永久” 的，所以要配置 301 跳转，把所有的 HTTP 流量都切换到 HTTPS，搜索引擎的爬虫看到 301 就会更新索引库，不再使用老的 URI；再比如，今晚网站后台要系统维护，服务暂时不可用，这就属于 “临时” 的，可以配置成 302 跳转，把流量临时切换到一个静态通知页面，浏览器看到这个 302 就知道这只是暂时的情况，不会做缓存优化，第二天还会访问原来的地址。</p>
+</blockquote>
+</li>
+<li><p><strong>304 Not Modified</strong>：用于在 If-Modified-Since 等条件请求中，进行 <strong>缓存控制</strong>，表示资源未修改。它不具有通常的跳转含义，但可以理解为 “重定向到已缓存的文件”（即缓存重定向）。</p>
+</li>
+<li><p>307 Temporary Redirect：与 302 状态码意义相同，唯一区别在于，当发送重定向请求时，307 状态码可以确保请求方法和消息主体不会发生变化。</p>
+</li>
+</ul>
+<h3 id="4××"><a href="#4××" class="headerlink" title="4××"></a>4××</h3><ul>
+<li><strong>400 Bad Request</strong>：通用错误码，表示客户端请求报文有错误，但具体是数据格式错误、缺少请求头还是 URI 超长都没有明确说，只是一个笼统的错误，客户端看到只会是一头雾水。在开发 Web 应用时应当尽量避免给客户端返回 400，而是要用其他更有明确含义的状态码。</li>
+<li>401 Authorization Required：未授权，当前请求需要用户验证。</li>
+<li><strong>403 Forbidden</strong>：实际上不是客户端的请求出错，而是表示服务器禁止访问资源。原因可能多种多样，例如信息敏感、法律禁止等，如果服务器友好一点，可以在 body 里详细说明拒绝请求的原因。</li>
+<li><strong>404 Not Found</strong>：原意是资源在请求的服务器上未找到，所以无法提供给客户端。但现在已经被用滥了，只要服务器“不高兴”就可以给出个 404，而我们也无从得知后面到底是真的未找到，还是有什么别的原因。</li>
+<li>405 Method Not Allowed：不允许使用某些方法操作资源，例如不允许 POST 只能 GET；</li>
+<li>406 Not Acceptable：资源无法满足客户端请求的条件，例如请求中文但只有英文；</li>
+<li>408 Request Timeout：请求超时，服务器等待了过长的时间；</li>
+<li>409 Conflict：多个请求发生了冲突，可以理解为多线程并发时的竞态；</li>
+<li>413 Request Entity Too Large：请求报文里的 body 太大；</li>
+<li>414 Request-URI Too Long：请求行里的 URI 太大；</li>
+<li>416 Requested Range Not Satisfiable：所请求的范围无法满足；</li>
+<li>429 Too Many Requests：客户端发送了太多的请求，通常是由于服务器的限连策略；</li>
+<li>431 Request Header Fields Too Large：请求头某个字段或总体太大；</li>
+</ul>
+<h3 id="5××"><a href="#5××" class="headerlink" title="5××"></a>5××</h3><ul>
+<li><p><strong>500 Internal Server Error</strong>：通用错误码，表示服务器内部发生错误，但究竟发生了什么错误我们不得而知。不过对于服务器来说这应该是好事，通常不应该把服务器内部的详细信息，例如出错的函数调用栈告诉外界，防止黑客的窥探或者分析。</p>
+</li>
+<li><p><strong>501 Not Implemented</strong>：表示客户端请求的功能还不支持，这个错误码比 500 要更温和一些。</p>
+</li>
+<li><p><strong>502 Bad Gateway：</strong>通常是服务器 <strong>作为网关或者代理</strong> 时返回的错误码，表示服务器自身工作正常，访问后端服务器时发生了错误，但具体的错误原因也是不知道的。</p>
+</li>
+<li><p><strong>503 Service Unavailable</strong>：表示服务器当前繁忙，暂时无法响应服务。</p>
+<blockquote>
+<p>503 是一个 <strong>临时</strong> 的状态，很可能过几秒后服务器就可以继续提供服务了，所以 503 响应头里通常还会有一个 <strong>Retry-After</strong> 字段，指示客户端可以在多久之后再次尝试发送请求。</p>
+</blockquote>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</a>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/%E9%80%9A%E7%94%A8%E6%8A%80%E6%9C%AF/">通用技术</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/HTTP/">HTTP</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/post/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%BA%8C%EF%BC%89/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">透视 HTTP 协议（二）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/post/Python%E8%A3%85%E9%A5%B0%E5%99%A8/">
+                        <span class="hidden-mobile">Python 装饰器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <span>Powered by</span> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <span>×</span> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量: 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数: 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
